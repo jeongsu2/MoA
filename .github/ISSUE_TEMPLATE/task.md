@@ -1,7 +1,7 @@
 ---
 name: 📋 Task
 about: 일반 작업이나 개발 태스크를 등록할 때 사용하는 템플릿
-title: "[TASK] "
+title: "[task] "
 labels: task
 assignees: ''
 ---

@@ -1,7 +1,7 @@
 ---
 name: 🔧 Refactoring / 코드 리팩토링
 about: 기능 변경 없이 코드 구조/품질을 개선할 때 사용하는 템플릿
-title: "[REFACTOR] "
+title: "[refactor] "
 labels: refactor
 assignees: ''
 ---

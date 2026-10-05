@@ -1,7 +1,7 @@
 ---
 name: 🐛 Bug Report
 about: 버그를 발견했을 때 사용하는 템플릿
-title: "[BUG] "
+title: "[bug] "
 labels: bug
 assignees: ''
 ---

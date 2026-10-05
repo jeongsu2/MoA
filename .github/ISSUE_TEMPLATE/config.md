@@ -1,7 +1,7 @@
 ---
 name: ⚙️ Config / 환경설정 수정
 about: 환경설정, 빌드, 배포 설정 변경 시 사용하는 템플릿
-title: "[CONFIG] "
+title: "[config] "
 labels: config
 assignees: ''
 ---

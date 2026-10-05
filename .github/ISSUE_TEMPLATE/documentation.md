@@ -1,7 +1,7 @@
 ---
 name: 📚 Documentation / 문서화
 about: README, API 문서, 주석 등 문서 작성 및 수정 시 사용하는 템플릿
-title: "[DOCS] "
+title: "[docs] "
 labels: documentation
 assignees: ''
 ---
