@@ -68,14 +68,16 @@
 
 ## 4. 코드 컨벤션
 
-### 백엔드
-- 변수, 함수, Attribute 이름은 소문자 + 밑줄(`snake_case`), 무슨 기능인지 바로 알 수 있는 단어로
-- 모듈 상수는 대문자 + 밑줄(`ALL_CAPS`)
+### 백엔드 (Java, Spring Boot)
+- 변수와 메서드 이름은 카멜 케이스(`camelCase`), 무슨 기능인지 바로 알 수 있는 단어로. 예) `findWinnerComment()`
+- 클래스와 인터페이스 이름은 파스칼 케이스(`PascalCase`). 예) `CommentService`
+- 상수(`static final`)는 대문자 + 밑줄(`ALL_CAPS`). 예) `PAYMENT_DEADLINE_MINUTES`
+- 패키지 이름은 모두 소문자
 - 들여쓰기는 공백 4칸
-- 한 줄짜리 `if`, `for`, `while`, `except` 문을 쓰지 않고 여러 줄로 나눠 쓴다
-- 모듈 임포트는 상대경로 대신 절대경로
-- 예외는 `except:`로 뭉뚱그려 잡지 말고 예외 종류를 명시한다
-- 주석: `#` 뒤에 공백 한 칸. 인라인 주석은 코드와 최소 공백 두 칸 띄운다
+- `if`, `for`, `while`은 한 줄이라도 중괄호 `{}`를 쓰고 여러 줄로 나눠 쓴다
+- import는 `*`(와일드카드)를 쓰지 않고 클래스마다 전체 경로로 쓴다
+- 예외는 `catch (Exception e)`로 뭉뚱그려 잡지 말고 예외 종류를 명시한다
+- 주석: `//` 뒤에 공백 한 칸. 코드 옆 주석은 코드와 최소 공백 두 칸 띄운다
 - 실행되는 코드만 남기고 커밋한다
 
 ### 프론트엔드
@@ -85,6 +87,6 @@
 - 단위는 `rem`, `%`(또는 분수) 사용, `px` 금지
 - ESLint 오류는 무시 주석을 달지 않고 고친다
 
-## 5. 확인이 필요한 부분
-- 백엔드 규칙(`except`, `snake_case`, 공백 4칸, 절대경로 임포트)은 **Python 기준**이다. 백엔드 언어는 Phase 2(ERD) 기술 선택에서 정하므로, 다른 언어로 정하면 이 장을 다시 맞춘다.
-- 프론트 예시에 `sampleComponent.tsx`가 있었지만 규칙은 `.jsx`라서 `.jsx`로 적었다.
+## 5. 참고
+- 백엔드 언어는 Java + Spring Boot로 정했다 ([ADR-002](decisions/ADR-002-backend-language.md)). 처음 받은 규칙은 Python 문법 기준이라 같은 의도를 Java 표준에 맞게 옮겼다.
+- 프론트 예시에 `sampleComponent.tsx`가 있었지만 규칙이 `.jsx`라서 `.jsx`로 적었다.
