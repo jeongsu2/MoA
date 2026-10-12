@@ -37,3 +37,8 @@
 - 프로토타입 피드백 반영(D-25): 입금 금액에 배송비 포함, 제주 산간 6,000원.
 - ERD v2 작성: v1 + 프로토타입 피드백(닉네임, My 배송지, 배송비, 주문 생성 시점)을 반영하고 변경표를 맨 앞에 둠. 승인 요청.
 - 2026-10-12 ERD v2 승인. Phase 2 완료.
+
+## 2026-10-12 Phase 4 하네스 설계 초안
+- 서브에이전트 7개 정의(.claude/agents), CLAUDE.md, git hook(commit-msg, pre-push) 초안을 harness/에 작성. 역할마다 도구 권한을 다르게 줌(reviewer는 쓰기 없음).
+- git hook은 임시 레포에서 통과, 차단 케이스를 직접 실행해 확인.
+- 결정(ADR-003): 하네스 레포에 올림, git hook으로 검사, pm/qa/backend-dev/reviewer 매번, 나머지는 필요할 때.
