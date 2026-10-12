@@ -1,0 +1,11 @@
+#!/bin/sh
+# develop, main 직접 푸시 막기
+while read local_ref local_sha remote_ref remote_sha; do
+    case "$remote_ref" in
+        refs/heads/main|refs/heads/develop)
+            echo "main, develop에는 직접 푸시하지 않음. 브랜치를 만들어 PR로 올려주세요"
+            exit 1
+            ;;
+    esac
+done
+exit 0
