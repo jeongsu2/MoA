@@ -18,3 +18,7 @@
 - 사용자 규칙: PR, 브랜치, 커밋은 쉬운 한국어, 커밋은 최소 단위, Claude는 contributor에서 제외.
 - 실패 → 수정: PR #1을 처음엔 문서 6개를 커밋 하나로 올렸음 → 규칙에 맞게 문서별 커밋 6개로 다시 나눠 올림 (내용 동일 확인 후 force-push).
 - 주의: 세션 기본 git 설정이 Claude 이름이라, 레포에서 작성자를 사용자 정보로 덮어써야 함.
+
+## 2026-10-05 Phase 1-2 (선착순 동시성, 5분 타이머)
+- 방법: 공식 문서(MySQL locking reads, Redis keyspace notifications)와 Kleppmann 글로 근거를 잡고, 국내 선착순 쿠폰 사례로 학습 경로를 확인.
+- 규칙 추가: 이슈와 PR은 사용자가 직접 만든다 (Claude 앱으로 만들면 "with Claude" 표시). 글에 중간점(·) 금지.
