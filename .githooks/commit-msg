@@ -1,0 +1,23 @@
+#!/bin/sh
+# 커밋 메시지 규칙 검사 (docs/CONVENTIONS.md)
+# 설치: git config core.hooksPath .githooks
+msg_file="$1"
+subject=$(grep -v '^#' "$msg_file" | head -n 1)
+
+types='feat|fix|style|refactor|file|design|comment|chore|docs|hotfix'
+if ! printf '%s' "$subject" | grep -Eq "^($types)(\([^)]+\))? : .+"; then
+    echo "커밋 제목 형식이 다름: \"$subject\""
+    echo "예) feat : 로그인 기능 구현   또는   fix(comment) : 당첨 판정 오류 수정"
+    exit 1
+fi
+
+if grep -Eiq '^(co-authored-by|claude-session):' "$msg_file"; then
+    echo "커밋에 Co-Authored-By, Claude-Session 같은 trailer는 넣지 않음"
+    exit 1
+fi
+
+if grep -q '·' "$msg_file"; then
+    echo "커밋 메시지에 가운뎃점(·)은 쓰지 않음. 쉼표로 바꿔주세요"
+    exit 1
+fi
+exit 0
