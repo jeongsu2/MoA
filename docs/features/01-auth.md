@@ -1,6 +1,6 @@
 # 기능 01. 회원가입과 로그인
 
-> 2026-10-13, 작성: pm, 상태: **초안 (열린 질문 정수 결정 대기)**
+> 2026-10-13, 작성: pm, 상태: **확정 (2026-10-13, 열린 질문 모두 추천안, D-34)**. `login-id/exists`, `PATCH /api/me`는 이번 범위에서 뺌 (오버엔지니어링 금지)
 > 입력: [requirements.md](../requirements.md) F-01, F-01a, F-01c, D-01, D-05, D-14, D-16, D-19, D-24 / [erd-v2.md](../erd/erd-v2.md) `users`, `seller_profile`, `address` / [03 리서치](../research/03-auth-image-realtime.md) 1장
 
 ## 1. 유저 스토리
