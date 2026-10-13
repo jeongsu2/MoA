@@ -44,6 +44,12 @@ public class AddressController {
         return addressService.changeAddress(userId, addressId, request);
     }
 
+    @PutMapping("/{addressId}/default")
+    public List<AddressResponse> changeDefaultAddress(@AuthenticationPrincipal Long userId,
+            @PathVariable Long addressId) {
+        return addressService.changeDefaultAddress(userId, addressId);
+    }
+
     @DeleteMapping("/{addressId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAddress(@AuthenticationPrincipal Long userId, @PathVariable Long addressId) {

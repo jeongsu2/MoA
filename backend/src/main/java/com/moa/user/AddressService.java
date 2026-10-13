@@ -66,6 +66,17 @@ public class AddressService {
         addressRepository.delete(address);
     }
 
+    // 같은 요청을 여러 번 보내도 결과가 같다 (PUT, 멱등)
+    @Transactional
+    public List<AddressResponse> changeDefaultAddress(Long userId, Long addressId) {
+        lockUser(userId);
+        Address address = findMyAddress(userId, addressId);
+        if (!address.isDefault()) {
+            addressRepository.changeDefault(userId, addressId);
+        }
+        return getAddresses(userId);
+    }
+
     private Address findMyAddress(Long userId, Long addressId) {
         return addressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.ADDRESS_NOT_FOUND));

@@ -22,4 +22,11 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Address a set a.isDefault = false where a.user.id = :userId and a.isDefault = true")
     int clearDefault(@Param("userId") Long userId);
+
+    // 한 문장으로 대상만 true, 나머지는 false. 대상이 내 배송지인지는 먼저 확인해야 한다.
+    // 아니면 WHERE에 걸리는 행이 모두 false가 되어 기본이 0개가 된다
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Address a set a.isDefault = case when a.id = :addressId then true else false end"
+            + " where a.user.id = :userId")
+    int changeDefault(@Param("userId") Long userId, @Param("addressId") Long addressId);
 }
