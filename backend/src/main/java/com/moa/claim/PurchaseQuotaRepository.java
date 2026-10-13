@@ -19,4 +19,10 @@ public interface PurchaseQuotaRepository extends JpaRepository<PurchaseQuota, Pu
     @Query(value = "update purchase_quota set active_count = active_count + 1"
             + " where post_id = :postId and user_id = :userId and active_count < :max", nativeQuery = true)
     int increase(@Param("postId") Long postId, @Param("userId") Long userId, @Param("max") int max);
+
+    // 당첨이 확정 없이 끝났을 때(입금 안 됨, 만료) 한 칸 돌려준다. 0 아래로는 안 내려간다
+    @Modifying(flushAutomatically = true)
+    @Query(value = "update purchase_quota set active_count = active_count - 1"
+            + " where post_id = :postId and user_id = :userId and active_count > 0", nativeQuery = true)
+    int decrease(@Param("postId") Long postId, @Param("userId") Long userId);
 }

@@ -34,4 +34,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             + " where p.id = :productId and p.status = com.moa.post.ProductStatus.ON_SALE"
             + " and p.currentClaimId is null")
     int reserve(@Param("productId") Long productId, @Param("claimId") Long claimId);
+
+    // 끝난 claim이 잡고 있던 상품을 판매 중으로 되돌린다. 다른 claim을 가리키면 건드리지 않는다
+    @Modifying(flushAutomatically = true)
+    @Query("update Product p set p.status = com.moa.post.ProductStatus.ON_SALE, p.currentClaimId = null"
+            + " where p.id = :productId and p.status = com.moa.post.ProductStatus.RESERVED"
+            + " and p.currentClaimId = :claimId")
+    int release(@Param("productId") Long productId, @Param("claimId") Long claimId);
 }
