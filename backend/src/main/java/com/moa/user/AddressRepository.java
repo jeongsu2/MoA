@@ -14,6 +14,9 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     // 기본이 맨 위, 나머지는 추가한 순서
     List<Address> findByUserIdOrderByIsDefaultDescIdAsc(Long userId);
 
+    // 남의 배송지도 없는 배송지와 똑같이 빈 결과가 된다
+    Optional<Address> findByIdAndUserId(Long id, Long userId);
+
     long countByUserId(Long userId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)

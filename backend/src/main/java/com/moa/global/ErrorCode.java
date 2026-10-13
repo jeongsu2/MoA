@@ -12,7 +12,8 @@ public enum ErrorCode {
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다"),
     // 남의 배송지와 없는 배송지는 같은 응답 (id가 있는지 드러내지 않음, D-34)
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지를 찾을 수 없습니다"),
-    ADDRESS_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "배송지는 최대 10개까지 저장할 수 있습니다");
+    ADDRESS_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "배송지는 최대 10개까지 저장할 수 있습니다"),
+    DEFAULT_ADDRESS_NOT_DELETABLE(HttpStatus.CONFLICT, "기본 배송지는 삭제할 수 없습니다. 다른 배송지를 기본으로 바꾼 뒤 삭제해주세요");
 
     private final HttpStatus status;
     private final String message;

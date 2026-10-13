@@ -1,5 +1,6 @@
 package com.moa.user;
 
+import com.moa.auth.AddressRequest;
 import com.moa.global.ApiException;
 import com.moa.global.ErrorCode;
 import java.util.List;
@@ -42,6 +43,32 @@ public class AddressService {
                 request.recipientPhone(), request.zipCode(), request.address1(), request.address2(),
                 request.deliveryNote(), request.setDefault()));
         return AddressResponse.from(address);
+    }
+
+    // 진행 중 당첨이 있어도 막지 않는다. 주문 주소는 입금완료 순간의 기본 배송지로 정해진다 (D-24)
+    @Transactional
+    public AddressResponse changeAddress(Long userId, Long addressId, AddressRequest request) {
+        lockUser(userId);
+        Address address = findMyAddress(userId, addressId);
+        address.change(request.recipientName(), request.recipientPhone(), request.zipCode(),
+                request.address1(), request.address2(), request.deliveryNote());
+        return AddressResponse.from(address);
+    }
+
+    // 기본 배송지는 못 지운다. 배송지가 1개뿐이면 그게 기본이라 마지막 1개도 같이 막힌다
+    @Transactional
+    public void deleteAddress(Long userId, Long addressId) {
+        lockUser(userId);
+        Address address = findMyAddress(userId, addressId);
+        if (address.isDefault()) {
+            throw new ApiException(ErrorCode.DEFAULT_ADDRESS_NOT_DELETABLE);
+        }
+        addressRepository.delete(address);
+    }
+
+    private Address findMyAddress(Long userId, Long addressId) {
+        return addressRepository.findByIdAndUserId(addressId, userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ADDRESS_NOT_FOUND));
     }
 
     private User lockUser(Long userId) {

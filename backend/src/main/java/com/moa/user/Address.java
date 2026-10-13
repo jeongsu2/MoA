@@ -69,4 +69,15 @@ public class Address {
         address.isDefault = isDefault;
         return address;
     }
+
+    // 이미 생긴 주문은 주소를 스냅샷으로 따로 갖고 있어서, 여기서 고쳐도 주문 주소는 안 바뀐다
+    public void change(String recipientName, String recipientPhone, String zipCode,
+            String address1, String address2, String deliveryNote) {
+        this.recipientName = recipientName;
+        this.recipientPhone = recipientPhone;
+        this.zipCode = zipCode;
+        this.address1 = address1;
+        this.address2 = address2;
+        this.deliveryNote = deliveryNote;
+    }
 }
