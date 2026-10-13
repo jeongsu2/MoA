@@ -38,4 +38,16 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
             + " where c.id = :claimId and c.buyer.id = :buyerId and c.status = com.moa.claim.ClaimStatus.WON"
             + " and c.deadlineAt > :now")
     int report(@Param("claimId") Long claimId, @Param("buyerId") Long buyerId, @Param("now") LocalDateTime now);
+
+    // 판매자 [입금확인]. 시간 제한이 없다 (D-07). [입금 안 됨]과 같은 REPORTED 조건이라 둘 중 하나만 이긴다 (05 문서 AC-18)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Claim c set c.status = com.moa.claim.ClaimStatus.CONFIRMED, c.confirmedAt = :now"
+            + " where c.id = :claimId and c.status = com.moa.claim.ClaimStatus.REPORTED")
+    int confirm(@Param("claimId") Long claimId, @Param("now") LocalDateTime now);
+
+    // 판매자 [입금 안 됨]
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Claim c set c.status = com.moa.claim.ClaimStatus.REJECTED, c.endedAt = :now"
+            + " where c.id = :claimId and c.status = com.moa.claim.ClaimStatus.REPORTED")
+    int reject(@Param("claimId") Long claimId, @Param("now") LocalDateTime now);
 }

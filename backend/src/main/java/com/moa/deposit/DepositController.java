@@ -20,4 +20,14 @@ public class DepositController {
     public ReportResponse report(@AuthenticationPrincipal Long userId, @PathVariable Long claimId) {
         return depositService.report(userId, claimId);
     }
+
+    @PostMapping("/api/claims/{claimId}/confirm")
+    public ConfirmResponse confirm(@AuthenticationPrincipal Long userId, @PathVariable Long claimId) {
+        return depositService.confirm(userId, claimId);
+    }
+
+    @PostMapping("/api/claims/{claimId}/reject")
+    public RejectResponse reject(@AuthenticationPrincipal Long userId, @PathVariable Long claimId) {
+        return depositService.reject(userId, claimId);
+    }
 }

@@ -35,6 +35,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             + " and p.currentClaimId is null")
     int reserve(@Param("productId") Long productId, @Param("claimId") Long claimId);
 
+    // 입금확인. 확정은 진행 중이 아니라서 current_claim_id를 비운다 (ERD 3장, 04 테스트 계획 I-2)
+    @Modifying(flushAutomatically = true)
+    @Query("update Product p set p.status = com.moa.post.ProductStatus.SOLD, p.currentClaimId = null"
+            + " where p.id = :productId and p.status = com.moa.post.ProductStatus.RESERVED"
+            + " and p.currentClaimId = :claimId")
+    int markSold(@Param("productId") Long productId, @Param("claimId") Long claimId);
+
     // 끝난 claim이 잡고 있던 상품을 판매 중으로 되돌린다. 다른 claim을 가리키면 건드리지 않는다
     @Modifying(flushAutomatically = true)
     @Query("update Product p set p.status = com.moa.post.ProductStatus.ON_SALE, p.currentClaimId = null"

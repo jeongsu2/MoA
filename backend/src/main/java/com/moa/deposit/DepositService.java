@@ -2,6 +2,7 @@ package com.moa.deposit;
 
 import com.moa.claim.Claim;
 import com.moa.claim.ClaimRepository;
+import com.moa.claim.ClaimService;
 import com.moa.claim.ClaimStatus;
 import com.moa.claim.ClaimTarget;
 import com.moa.comment.Comment;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DepositService {
 
+    public static final String THANKS_MESSAGE = "구매감사합니다. 예쁘게 포장해서 전달드릴게요 💓";
+
     private final Clock clock;
     private final ClaimRepository claimRepository;
     private final ProductRepository productRepository;
@@ -40,12 +43,15 @@ public class DepositService {
     private final AddressRepository addressRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final RemoteAreaZipCodes remoteAreaZipCodes;
+    private final ClaimService claimService;
 
     public DepositService(Clock clock, ClaimRepository claimRepository, ProductRepository productRepository,
             SalePostRepository salePostRepository, CommentRepository commentRepository,
             UserRepository userRepository, AddressRepository addressRepository,
-            PurchaseOrderRepository purchaseOrderRepository, RemoteAreaZipCodes remoteAreaZipCodes) {
+            PurchaseOrderRepository purchaseOrderRepository, RemoteAreaZipCodes remoteAreaZipCodes,
+            ClaimService claimService) {
         this.clock = clock;
+        this.claimService = claimService;
         this.claimRepository = claimRepository;
         this.productRepository = productRepository;
         this.salePostRepository = salePostRepository;
@@ -89,6 +95,59 @@ public class DepositService {
             throw new ApiException(ErrorCode.DEPOSIT_DEADLINE_PASSED);
         }
         throw new ApiException(ErrorCode.CLAIM_STATUS_CONFLICT);
+    }
+
+    // 판매자 [입금확인] (05 문서 AC-12, AC-13). 감사 댓글은 UPDATE가 1행일 때만 써서 중복 클릭에도 1개 (D-08)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public ConfirmResponse confirm(Long sellerId, Long claimId) {
+        ClaimTarget target = findTargetForSeller(sellerId, claimId);
+        lockProduct(target);
+        LocalDateTime now = now();
+
+        if (claimRepository.confirm(claimId, now) == 1) {
+            if (productRepository.markSold(target.productId(), claimId) != 1) {
+                throw new IllegalStateException("상품 " + target.productId() + "을 판매 완료로 바꾸지 못함");
+            }
+            commentRepository.save(Comment.system(salePostRepository.getReferenceById(target.postId()),
+                    userRepository.getReferenceById(sellerId), commentRepository.getReferenceById(target.commentId()),
+                    THANKS_MESSAGE, now));
+            return new ConfirmResponse(claimId, ClaimStatus.CONFIRMED, now);
+        }
+
+        Claim claim = findClaim(claimId);
+        if (claim.getStatus() == ClaimStatus.CONFIRMED) {
+            return new ConfirmResponse(claimId, ClaimStatus.CONFIRMED, claim.getConfirmedAt());
+        }
+        // 신고 전(WON), 이미 입금 안 됨, 만료는 확인할 수 없다 (AC-15, AC-18)
+        throw new ApiException(ErrorCode.CLAIM_STATUS_CONFLICT);
+    }
+
+    // 판매자 [입금 안 됨] (05 문서 AC-17, AC-19). 주문 행은 기록으로 남긴다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public RejectResponse reject(Long sellerId, Long claimId) {
+        ClaimTarget target = findTargetForSeller(sellerId, claimId);
+        lockProduct(target);
+        LocalDateTime now = now();
+
+        if (claimRepository.reject(claimId, now) == 1) {
+            claimService.releaseEndedClaim(target.productId(), target.postId(), claimId, target.buyerId());
+            return new RejectResponse(claimId, ClaimStatus.REJECTED, null);
+        }
+
+        if (findClaim(claimId).getStatus() == ClaimStatus.REJECTED) {
+            return new RejectResponse(claimId, ClaimStatus.REJECTED, null);
+        }
+        throw new ApiException(ErrorCode.CLAIM_STATUS_CONFLICT);
+    }
+
+    // 없는 당첨은 404, 그 글의 판매자가 아니면 403. 역할이 아니라 글 작성자와 요청자를 비교한다 (AC-16)
+    private ClaimTarget findTargetForSeller(Long sellerId, Long claimId) {
+        ClaimTarget target = claimRepository.findTarget(claimId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CLAIM_NOT_FOUND));
+        if (!target.sellerId().equals(sellerId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN);
+        }
+        return target;
     }
 
     // 락 순서: product(이미 잠금) -> users. 기본 배송지는 users 행 FOR UPDATE 아래에서 읽어서
