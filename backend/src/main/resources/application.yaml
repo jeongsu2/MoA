@@ -31,6 +31,9 @@ server:
         max-age: 7d
 
 moa:
+  scheduler:
+    # 5분 만료 스케줄러 자동 실행 (06 문서). 테스트 프로필에서는 끈다
+    enabled: true
   image:
     # 로컬 디스크 저장 폴더 (D-17). 서버를 실행한 위치 기준
     dir: ./uploads
