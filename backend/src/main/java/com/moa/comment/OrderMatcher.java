@@ -7,11 +7,11 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 // "정확히 기재" 판정 (04 문서 Q-1 A, 정수 확인 전). 정규화한 뒤 "번호 + 이름"과 완전히 같아야 한다.
-// 정규화: 모든 공백 제거, 영문 소문자로. 번호 바로 뒤의 점 하나는 있어도 없어도 된다.
+// 정규화: 모든 공백(NBSP, 전각 공백 포함) 제거, 영문 소문자로. 번호 바로 뒤의 점 하나는 있어도 없어도 된다.
 // 그 외 글자가 하나라도 더 있으면 실패 ("1 니트 구매할게요"는 NORMAL)
 public final class OrderMatcher {
 
-    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
 
     private OrderMatcher() {
     }
