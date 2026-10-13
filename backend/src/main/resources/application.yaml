@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: moa
+  jpa:
+    # 요청이 끝날 때까지 DB 커넥션을 잡지 않도록 끔 (판매 오픈 때 커넥션 풀 고갈 방지)
+    open-in-view: false
