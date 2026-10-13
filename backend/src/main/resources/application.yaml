@@ -7,3 +7,15 @@ spring:
     hibernate:
       # 지금은 로컬과 테스트뿐이라 ddl-auto로 테이블을 만든다. 운영 배포 전에 Flyway로 바꾼다 (D-36)
       ddl-auto: update
+
+server:
+  servlet:
+    session:
+      # 판매를 기다리다 끊기지 않게 7일 (D-34). 쿠키 탈취 시 위험 기간이 긴 대신
+      timeout: 7d
+      tracking-modes: cookie
+      cookie:
+        http-only: true
+        same-site: lax
+        # 쿠키도 7일 유지. 없으면 브라우저를 닫을 때 쿠키가 사라진다
+        max-age: 7d
