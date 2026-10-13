@@ -42,10 +42,10 @@ public class SecurityConfig {
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/error").permitAll()
-                        // 구매자는 인스타 링크로 들어와 로그인 없이 사진을 본다
-                        .requestMatchers(HttpMethod.GET, "/images/*").permitAll()
+                        // 구매자는 인스타 링크로 들어와 로그인 없이 글과 사진을 본다 (DRAFT는 서비스가 404로 막는다)
+                        .requestMatchers(HttpMethod.GET, "/images/*", "/api/posts/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/images").hasRole("SELLER")
-                        .requestMatchers("/api/posts/**").hasRole("SELLER")
+                        .requestMatchers("/api/posts/**", "/api/me/posts").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/me/seller-profile").hasRole("SELLER")
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception

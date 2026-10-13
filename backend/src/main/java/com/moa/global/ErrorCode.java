@@ -19,6 +19,8 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다"),
     IMAGE_NOT_UPLOADED(HttpStatus.BAD_REQUEST, "먼저 올리지 않은 이미지가 있습니다"),
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "글 하나에 올릴 수 있는 이미지 수를 넘었습니다"),
+    // 남의 DRAFT 글, 남의 글 수정과 없는 글은 같은 응답 (글이 있는지 드러내지 않음)
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "판매 글을 찾을 수 없습니다"),
     DUPLICATE_ITEM_NO(HttpStatus.BAD_REQUEST, "같은 글 안에서 상품 번호가 겹칩니다");
 
     private final HttpStatus status;

@@ -2,6 +2,7 @@ package com.moa.post;
 
 import com.moa.global.ApiException;
 import com.moa.global.ErrorCode;
+import com.moa.image.ImageStorage;
 import com.moa.user.User;
 import com.moa.user.UserRepository;
 import java.time.LocalDateTime;
@@ -19,13 +20,16 @@ public class PostService {
     private final SalePostRepository salePostRepository;
     private final PostImageRepository postImageRepository;
     private final ProductRepository productRepository;
+    private final ImageStorage imageStorage;
 
     public PostService(UserRepository userRepository, SalePostRepository salePostRepository,
-            PostImageRepository postImageRepository, ProductRepository productRepository) {
+            PostImageRepository postImageRepository, ProductRepository productRepository,
+            ImageStorage imageStorage) {
         this.userRepository = userRepository;
         this.salePostRepository = salePostRepository;
         this.postImageRepository = postImageRepository;
         this.productRepository = productRepository;
+        this.imageStorage = imageStorage;
     }
 
     // 글, 사진, 상품은 한 트랜잭션. 상품 하나라도 실패하면 글도 안 생긴다 (03 문서 AC-1)
@@ -38,6 +42,35 @@ public class PostService {
         saveImages(post, request.imageKeys());
         saveProducts(post, request.products());
         return new PostCreateResponse(post.getId(), post.getStatus());
+    }
+
+    // 비로그인이면 viewerId가 null. DRAFT는 작성자에게만 보이고 남에게는 없는 글과 같은 404 (03 문서 AC-13)
+    @Transactional(readOnly = true)
+    public PostDetailResponse getPost(Long postId, Long viewerId) {
+        SalePost post = salePostRepository.findById(postId)
+                .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+        if (post.isDraft() && !post.isWrittenBy(viewerId)) {
+            throw new ApiException(ErrorCode.POST_NOT_FOUND);
+        }
+        return toDetail(post);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyPostResponse> getMyPosts(Long sellerId) {
+        return salePostRepository.findMyPosts(sellerId);
+    }
+
+    private PostDetailResponse toDetail(SalePost post) {
+        List<PostImageResponse> images = postImageRepository.findByPostIdOrderBySortOrderAsc(post.getId()).stream()
+                .map(image -> new PostImageResponse(image.getImageKey(), imageStorage.urlOf(image.getImageKey()),
+                        image.getSortOrder()))
+                .toList();
+        List<ProductResponse> products = productRepository.findByPostIdOrderByIdAsc(post.getId()).stream()
+                .map(ProductResponse::from)
+                .toList();
+        return new PostDetailResponse(post.getId(), post.getTitle(), post.getContent(), post.getStatus(),
+                post.getOpenedAt(), post.getSeller().getNickname(), images, products, post.getShippingFee(),
+                post.getRemoteShippingFee());
     }
 
     // sort_order는 보낸 순서 그대로
