@@ -20,6 +20,7 @@ import com.moa.user.UserRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DepositService {
 
     public static final String THANKS_MESSAGE = "구매감사합니다. 예쁘게 포장해서 전달드릴게요 💓";
+    private static final List<ClaimStatus> SELLER_ORDER_STATUSES = List.of(ClaimStatus.REPORTED, ClaimStatus.CONFIRMED);
 
     private final Clock clock;
     private final ClaimRepository claimRepository;
@@ -138,6 +140,17 @@ public class DepositService {
             return new RejectResponse(claimId, ClaimStatus.REJECTED, null);
         }
         throw new ApiException(ErrorCode.CLAIM_STATUS_CONFLICT);
+    }
+
+    // 그 글의 판매자만 (05 문서 AC-21). 없는 글은 404, 다른 사람의 글은 403
+    @Transactional(readOnly = true)
+    public List<SellerOrderResponse> getOrders(Long sellerId, Long postId) {
+        SalePost post = salePostRepository.findById(postId)
+                .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+        if (!post.isWrittenBy(sellerId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN);
+        }
+        return purchaseOrderRepository.findSellerOrders(postId, SELLER_ORDER_STATUSES);
     }
 
     // 없는 당첨은 404, 그 글의 판매자가 아니면 403. 역할이 아니라 글 작성자와 요청자를 비교한다 (AC-16)

@@ -1,6 +1,8 @@
 package com.moa.deposit;
 
+import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,5 +31,11 @@ public class DepositController {
     @PostMapping("/api/claims/{claimId}/reject")
     public RejectResponse reject(@AuthenticationPrincipal Long userId, @PathVariable Long claimId) {
         return depositService.reject(userId, claimId);
+    }
+
+    // SecurityConfig의 /api/posts/** 규칙으로 판매자 역할만 들어온다. 그 글의 판매자인지는 서비스가 본다
+    @GetMapping("/api/posts/{postId}/orders")
+    public List<SellerOrderResponse> getOrders(@AuthenticationPrincipal Long userId, @PathVariable Long postId) {
+        return depositService.getOrders(userId, postId);
     }
 }
