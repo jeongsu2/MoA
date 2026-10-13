@@ -23,7 +23,10 @@ public enum ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "판매 글을 찾을 수 없습니다"),
     DUPLICATE_ITEM_NO(HttpStatus.BAD_REQUEST, "같은 글 안에서 상품 번호가 겹칩니다"),
     // 판매를 연 뒤 상품이 바뀌면 이미 달린 댓글의 판정 기준이 흔들린다 (03 문서 Q-1 A)
-    PRODUCTS_LOCKED(HttpStatus.CONFLICT, "판매를 연 뒤에는 상품을 바꿀 수 없습니다");
+    PRODUCTS_LOCKED(HttpStatus.CONFLICT, "판매를 연 뒤에는 상품을 바꿀 수 없습니다"),
+    PRODUCT_REQUIRED(HttpStatus.BAD_REQUEST, "상품을 1개 이상 등록해야 판매를 열 수 있습니다"),
+    // 닫힌 글을 다시 열거나, 열지 않은 글을 닫을 때
+    POST_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 글 상태에서는 할 수 없습니다");
 
     private final HttpStatus status;
     private final String message;

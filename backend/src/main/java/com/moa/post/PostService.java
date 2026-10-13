@@ -6,6 +6,7 @@ import com.moa.image.ImageStorage;
 import com.moa.user.User;
 import com.moa.user.UserRepository;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -62,6 +63,38 @@ public class PostService {
         postImageRepository.deleteByPostId(postId);
         saveImages(post, request.imageKeys());
         return toDetail(post);
+    }
+
+    // 같은 요청을 여러 번 보내도 결과가 같다. 이미 OPEN이면 200이고 opened_at은 처음 값 그대로 (03 문서 AC-10)
+    @Transactional
+    public PostStatusResponse openPost(Long sellerId, Long postId) {
+        // DB 컬럼 정밀도(마이크로초)에 맞춰 두어 응답 값과 나중에 조회한 값이 같게 한다
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        if (salePostRepository.open(postId, sellerId, now) == 1) {
+            return new PostStatusResponse(PostStatus.OPEN, now);
+        }
+        SalePost post = findMyPost(sellerId, postId);
+        return switch (post.getStatus()) {
+            case OPEN -> new PostStatusResponse(PostStatus.OPEN, post.getOpenedAt());
+            case DRAFT -> throw new ApiException(ErrorCode.PRODUCT_REQUIRED);
+            case CLOSED -> throw new ApiException(ErrorCode.POST_STATUS_CONFLICT);
+        };
+    }
+
+    // OPEN에서만 닫는다. 이미 CLOSED면 200 (멱등), DRAFT면 409
+    @Transactional
+    public PostStatusResponse closePost(Long sellerId, Long postId) {
+        salePostRepository.close(postId, sellerId);
+        SalePost post = findMyPost(sellerId, postId);
+        if (post.getStatus() != PostStatus.CLOSED) {
+            throw new ApiException(ErrorCode.POST_STATUS_CONFLICT);
+        }
+        return new PostStatusResponse(post.getStatus(), post.getOpenedAt());
+    }
+
+    private SalePost findMyPost(Long sellerId, Long postId) {
+        return salePostRepository.findByIdAndSellerId(postId, sellerId)
+                .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
     }
 
     // 비로그인이면 viewerId가 null. DRAFT는 작성자에게만 보이고 남에게는 없는 글과 같은 404 (03 문서 AC-13)

@@ -40,6 +40,17 @@ public class PostController {
         return postService.updatePost(userId, postId, request);
     }
 
+    // DRAFT에서 OPEN으로 바뀌는 곳은 여기 하나뿐이다. 그래서 PUT 수정과 따로 둔다
+    @PostMapping("/api/posts/{postId}/open")
+    public PostStatusResponse openPost(@AuthenticationPrincipal Long userId, @PathVariable Long postId) {
+        return postService.openPost(userId, postId);
+    }
+
+    @PostMapping("/api/posts/{postId}/close")
+    public PostStatusResponse closePost(@AuthenticationPrincipal Long userId, @PathVariable Long postId) {
+        return postService.closePost(userId, postId);
+    }
+
     // 비로그인도 부른다. 그때는 principal이 Long이 아니라서 userId가 null로 들어온다
     @GetMapping("/api/posts/{postId}")
     public PostDetailResponse getPost(@AuthenticationPrincipal Long userId, @PathVariable Long postId) {
