@@ -8,4 +8,5 @@ services:
       - 'MYSQL_ROOT_PASSWORD=root'
       - 'TZ=Asia/Seoul'
     ports:
-      - '3306:3306'
+      # 로컬에 설치된 MySQL(3306)과 겹치지 않게 3307 사용
+      - '3307:3306'
