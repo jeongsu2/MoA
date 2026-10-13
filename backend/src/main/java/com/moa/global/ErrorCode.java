@@ -21,7 +21,9 @@ public enum ErrorCode {
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "글 하나에 올릴 수 있는 이미지 수를 넘었습니다"),
     // 남의 DRAFT 글, 남의 글 수정과 없는 글은 같은 응답 (글이 있는지 드러내지 않음)
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "판매 글을 찾을 수 없습니다"),
-    DUPLICATE_ITEM_NO(HttpStatus.BAD_REQUEST, "같은 글 안에서 상품 번호가 겹칩니다");
+    DUPLICATE_ITEM_NO(HttpStatus.BAD_REQUEST, "같은 글 안에서 상품 번호가 겹칩니다"),
+    // 판매를 연 뒤 상품이 바뀌면 이미 달린 댓글의 판정 기준이 흔들린다 (03 문서 Q-1 A)
+    PRODUCTS_LOCKED(HttpStatus.CONFLICT, "판매를 연 뒤에는 상품을 바꿀 수 없습니다");
 
     private final HttpStatus status;
     private final String message;

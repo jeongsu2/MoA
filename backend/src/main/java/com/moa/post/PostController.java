@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +31,13 @@ public class PostController {
             @Valid @RequestBody PostCreateRequest request) {
         imageService.requireUploaded(request.imageKeys());
         return postService.createPost(userId, request);
+    }
+
+    @PutMapping("/api/posts/{postId}")
+    public PostDetailResponse updatePost(@AuthenticationPrincipal Long userId, @PathVariable Long postId,
+            @Valid @RequestBody PostUpdateRequest request) {
+        imageService.requireUploaded(request.imageKeys());
+        return postService.updatePost(userId, postId, request);
     }
 
     // 비로그인도 부른다. 그때는 principal이 Long이 아니라서 userId가 null로 들어온다

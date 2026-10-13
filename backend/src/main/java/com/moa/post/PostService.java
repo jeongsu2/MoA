@@ -44,6 +44,26 @@ public class PostService {
         return new PostCreateResponse(post.getId(), post.getStatus());
     }
 
+    // 사진은 늘 통째로 바꾼다. 상품은 DRAFT일 때만, 보냈을 때만 통째로 바꾼다 (03 문서 Q-1 A).
+    // DRAFT 상품은 아직 댓글과 당첨이 가리키지 않아서 지우고 새로 넣어도 된다. 번호를 서로 바꾸는 수정도 유니크에 안 걸린다
+    @Transactional
+    public PostDetailResponse updatePost(Long sellerId, Long postId, PostUpdateRequest request) {
+        SalePost post = salePostRepository.findMyPostForUpdate(postId, sellerId)
+                .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+        if (request.products() != null) {
+            if (!post.isDraft()) {
+                throw new ApiException(ErrorCode.PRODUCTS_LOCKED);
+            }
+            requireNoDuplicateItemNo(request.products());
+            productRepository.deleteByPostId(postId);
+            saveProducts(post, request.products());
+        }
+        post.changeText(request.title(), request.content());
+        postImageRepository.deleteByPostId(postId);
+        saveImages(post, request.imageKeys());
+        return toDetail(post);
+    }
+
     // 비로그인이면 viewerId가 null. DRAFT는 작성자에게만 보이고 남에게는 없는 글과 같은 404 (03 문서 AC-13)
     @Transactional(readOnly = true)
     public PostDetailResponse getPost(Long postId, Long viewerId) {
