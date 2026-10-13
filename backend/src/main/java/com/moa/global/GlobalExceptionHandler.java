@@ -2,6 +2,7 @@ package com.moa.global;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -17,6 +18,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException e) {
         ErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode));
+    }
+
+    // 데드락, 락 대기 초과 (CannotAcquireLockException 포함). 서버 버그가 아니라 경쟁이라 500 대신 409 다시 시도.
+    // 드물게 승계가 quota를 순서 밖에서 잡을 때 [입금 안 됨]이 여기로 온다 (claim-implementation-notes 5번)
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleLockFailure(PessimisticLockingFailureException e) {
+        ErrorCode errorCode = ErrorCode.LOCK_CONFLICT;
         return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode));
     }
 

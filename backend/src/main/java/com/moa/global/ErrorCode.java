@@ -34,7 +34,9 @@ public enum ErrorCode {
     // 만료 스케줄러가 아직 안 돌았어도 deadline_at이 지나면 이 응답 (05 문서 AC-5)
     DEPOSIT_DEADLINE_PASSED(HttpStatus.CONFLICT, "입금 시간이 지났습니다"),
     // 다른 동작이 먼저 상태를 바꿨을 때. 같은 요청 반복은 이 응답이 아니라 200과 현재 상태
-    CLAIM_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 당첨 상태에서는 할 수 없습니다");
+    CLAIM_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 당첨 상태에서는 할 수 없습니다"),
+    // 데드락이나 락 대기 초과로 DB가 트랜잭션을 되돌렸을 때. 아무것도 바뀌지 않았으니 다시 보내면 된다
+    LOCK_CONFLICT(HttpStatus.CONFLICT, "요청이 몰려 처리하지 못했습니다. 잠시 후 다시 시도해주세요");
 
     private final HttpStatus status;
     private final String message;
