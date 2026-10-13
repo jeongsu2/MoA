@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,8 @@ class FeedIntegrationTest extends ClaimTestSupport {
                 .andExpect(jsonPath("$.comments[1].productId").value(productId))
                 .andExpect(jsonPath("$.hasMore").value(false));
 
+        // 겹쳐 읽기 구간(최근 5초)이 지난 뒤라 afterId 이후만 온다
+        testClock.advance(Duration.ofSeconds(10));
         mockMvc.perform(get(feedUrl(postId, normalId)))
                 .andExpect(jsonPath("$.comments.length()").value(1))
                 .andExpect(jsonPath("$.comments[0].commentId").value(orderId));
