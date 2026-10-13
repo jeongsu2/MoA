@@ -2,11 +2,21 @@ package com.moa.claim;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -17,6 +27,9 @@ import tools.jackson.databind.JsonNode;
 class ExpiryConcurrencyTest extends ExpiryTestSupport {
 
     private static final int REPEAT = 10;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Test
     @DisplayName("E-03 같은 claim에 만료 2건 동시: EXPIRED 1번, quota -1 한 번, 새 claim 1개 (10번 반복)")
@@ -125,15 +138,24 @@ class ExpiryConcurrencyTest extends ExpiryTestSupport {
 
             List<Object> results = runAtTheSameTime(List.<Callable<Object>>of(
                     () -> claimExpiryService.expire(claimId),
-                    () -> mockMvc.perform(secondOrder).andReturn().getResponse().getStatus(),
-                    () -> mockMvc.perform(thirdOrder).andReturn().getResponse().getStatus()));
+                    () -> mockMvc.perform(secondOrder).andReturn().getResponse(),
+                    () -> mockMvc.perform(thirdOrder).andReturn().getResponse()));
 
-            assertThat(results).containsExactly(true, 201, 201);
+            assertThat(results.get(0)).isEqualTo(true);
+            List<Long> newCommentIds = new ArrayList<>();
+            for (Object result : results.subList(1, 3)) {
+                MockHttpServletResponse response = (MockHttpServletResponse) result;
+                assertThat(response.getStatus()).as(response.getContentAsString()).isEqualTo(201);
+                newCommentIds.add(jsonMapper.readTree(response.getContentAsString()).get("commentId").asLong());
+            }
             assertThat(claimStatus(claimId)).isEqualTo("EXPIRED");
             // 새 댓글이 후보로 잡혀 승계되든, ON_SALE을 보고 바로 당첨되든 한 명만
             assertThat(claimCount(productId)).isEqualTo(2);
             assertThat(productStatus(productId)).isEqualTo("RESERVED");
             assertThat(quotaOf(postId, "buyer02") + quotaOf(postId, "buyer03")).isEqualTo(1);
+            // 당첨은 두 새 댓글 중 id가 작은 쪽. 만료가 락 전에 잡은 옛 스냅샷으로 후보를 찾으면(REPEATABLE READ)
+            // 기다리는 동안 커밋된 댓글을 못 보고 ON_SALE로 되돌려, 뒤 댓글이 당첨되는 것을 잡는다
+            assertThat(commentIdOfClaim(currentClaimId(productId))).isEqualTo(Collections.min(newCommentIds));
             assertClaimInvariants();
         }
     }
@@ -173,5 +195,65 @@ class ExpiryConcurrencyTest extends ExpiryTestSupport {
             assertThat(quotaOf(postId, "buyer02")).isEqualTo(1);
             assertClaimInvariants();
         }
+    }
+
+    @Test
+    @DisplayName("S-05b 만료가 상품 락을 기다리는 사이 앞서 커밋된 새 댓글도 후보로 본다 (READ COMMITTED 확인, 10번 반복)")
+    void expireSeesCommentsCommittedWhileWaiting() throws Exception {
+        MockHttpSession seller = signupSeller("seller01", "판매자1");
+        MockHttpSession buyer = signupBuyer("buyer01", "구매자1");
+        MockHttpSession next = signupBuyer("buyer02", "구매자2");
+
+        for (int round = 0; round < REPEAT; round++) {
+            testClock.setTo(FIXED_NOW);
+            Long postId = createOpenPost(seller, List.of(product("1", "니트")));
+            Long productId = productIds(postId).get(0);
+            Long claimId = claimIdOf(comment(buyer, postId, "1 니트"));
+            testClock.setTo(DEADLINE);
+            MockHttpServletRequestBuilder order = commentRequest(next, postId, "1 니트");
+
+            // 테스트가 상품 행을 먼저 잡고, 댓글이 그 뒤에 줄을 서고, 만료가 그 뒤에 줄을 서게 한다.
+            // 만료는 락 전에 claim을 읽으므로 REPEATABLE READ면 그때 잡힌 스냅샷으로 후보를 찾아 댓글을 놓친다
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            try (Connection gate = dataSource.getConnection()) {
+                gate.setAutoCommit(false);
+                try (PreparedStatement lock = gate.prepareStatement("select id from product where id = ? for update")) {
+                    lock.setLong(1, productId);
+                    lock.executeQuery().close();
+                }
+                Future<MockHttpServletResponse> orderResult =
+                        executor.submit(() -> mockMvc.perform(order).andReturn().getResponse());
+                waitForLockWaits(1);
+                Future<Boolean> expireResult = executor.submit(() -> claimExpiryService.expire(claimId));
+                waitForLockWaits(2);
+                gate.commit();
+
+                MockHttpServletResponse response = orderResult.get(60, TimeUnit.SECONDS);
+                assertThat(response.getStatus()).as(response.getContentAsString()).isEqualTo(201);
+                assertThat(expireResult.get(60, TimeUnit.SECONDS)).isTrue();
+                Long commentId = jsonMapper.readTree(response.getContentAsString()).get("commentId").asLong();
+                assertHandedOver(productId, claimId, commentId, DEADLINE);
+            } finally {
+                executor.shutdownNow();
+            }
+            assertClaimInvariants();
+        }
+    }
+
+    // 상품 행 FOR UPDATE에서 기다리는 연결이 count개가 될 때까지 기다린다
+    private void waitForLockWaits(int count) throws InterruptedException {
+        long until = System.currentTimeMillis() + 10_000;
+        while (System.currentTimeMillis() < until) {
+            // innodb_trx는 PROCESS 권한이 필요해서, 같은 계정의 연결만 보이는 processlist에서 실행 중인 FOR UPDATE를 센다.
+            // 패턴을 concat으로 만들어 이 조회문 자신은 세지 않는다
+            Integer waiting = jdbcTemplate.queryForObject("select count(*) from information_schema.processlist"
+                    + " where id <> connection_id() and command = 'Query'"
+                    + " and info like concat('%from product%', 'for', ' update%')", Integer.class);
+            if (waiting != null && waiting >= count) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        throw new IllegalStateException("락 대기 " + count + "개가 생기지 않음");
     }
 }
