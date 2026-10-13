@@ -51,6 +51,9 @@ public abstract class IntegrationTestSupport {
 
     @BeforeEach
     protected void cleanTables() {
+        jdbcTemplate.update("delete from product");
+        jdbcTemplate.update("delete from post_image");
+        jdbcTemplate.update("delete from sale_post");
         jdbcTemplate.update("delete from address");
         jdbcTemplate.update("delete from seller_profile");
         jdbcTemplate.update("delete from users");
