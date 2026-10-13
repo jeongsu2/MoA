@@ -39,4 +39,8 @@ public interface SalePostRepository extends JpaRepository<SalePost, Long> {
     int close(@Param("postId") Long postId, @Param("sellerId") Long sellerId);
 
     Optional<SalePost> findByIdAndSellerId(Long id, Long sellerId);
+
+    // 상태만 읽는다. 엔티티를 1차 캐시에 올리지 않아서 같은 트랜잭션에서 옛 상태를 다시 보지 않는다
+    @Query("select p.status from SalePost p where p.id = :postId")
+    Optional<PostStatus> findStatusById(@Param("postId") Long postId);
 }

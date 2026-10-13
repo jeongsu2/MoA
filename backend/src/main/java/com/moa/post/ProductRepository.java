@@ -48,4 +48,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             + " where p.id = :productId and p.status = com.moa.post.ProductStatus.RESERVED"
             + " and p.currentClaimId = :claimId")
     int release(@Param("productId") Long productId, @Param("claimId") Long claimId);
+
+    // 차순위 승계. 끝난 claim을 가리킬 때만 새 claim으로 바꾼다. 상품은 RESERVED 그대로 (06 문서 AC-13, AC-16)
+    @Modifying(flushAutomatically = true)
+    @Query("update Product p set p.currentClaimId = :newClaimId"
+            + " where p.id = :productId and p.status = com.moa.post.ProductStatus.RESERVED"
+            + " and p.currentClaimId = :endedClaimId")
+    int handOver(@Param("productId") Long productId, @Param("endedClaimId") Long endedClaimId,
+            @Param("newClaimId") Long newClaimId);
 }
