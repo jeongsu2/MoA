@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/error").permitAll()
                         // 구매자는 인스타 링크로 들어와 로그인 없이 글과 사진을 본다 (DRAFT는 서비스가 404로 막는다)
                         .requestMatchers(HttpMethod.GET, "/images/*", "/api/posts/*").permitAll()
+                        // 댓글 주문은 구매자, 판매자 모두 (D-34). 아래 판매자 전용 규칙보다 먼저 둔다
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/images").hasRole("SELLER")
                         .requestMatchers("/api/posts/**", "/api/me/posts").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/me/seller-profile").hasRole("SELLER")

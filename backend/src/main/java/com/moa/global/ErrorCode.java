@@ -26,7 +26,9 @@ public enum ErrorCode {
     PRODUCTS_LOCKED(HttpStatus.CONFLICT, "판매를 연 뒤에는 상품을 바꿀 수 없습니다"),
     PRODUCT_REQUIRED(HttpStatus.BAD_REQUEST, "상품을 1개 이상 등록해야 판매를 열 수 있습니다"),
     // 닫힌 글을 다시 열거나, 열지 않은 글을 닫을 때
-    POST_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 글 상태에서는 할 수 없습니다");
+    POST_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 글 상태에서는 할 수 없습니다"),
+    // 판매를 닫은 글에는 새 댓글을 받지 않는다 (03 문서 Q-2 A)
+    POST_CLOSED(HttpStatus.CONFLICT, "판매가 끝난 글에는 댓글을 쓸 수 없습니다");
 
     private final HttpStatus status;
     private final String message;
