@@ -13,5 +13,10 @@ public record AddressCreateRequest(
         @NotBlank @Size(max = 200) String address1,
         @Size(max = 200) String address2,
         @Size(max = 100) String deliveryNote,
-        boolean setDefault) {
+        Boolean setDefault) {
+
+    // 기본형 boolean이면 Jackson이 빠진 값을 400으로 거부해서 Boolean으로 받고 null은 false로 본다
+    public boolean wantsDefault() {
+        return Boolean.TRUE.equals(setDefault);
+    }
 }

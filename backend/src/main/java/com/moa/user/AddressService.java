@@ -36,12 +36,12 @@ public class AddressService {
         if (addressRepository.countByUserId(userId) >= MAX_ADDRESS_COUNT) {
             throw new ApiException(ErrorCode.ADDRESS_LIMIT_EXCEEDED);
         }
-        if (request.setDefault()) {
+        if (request.wantsDefault()) {
             addressRepository.clearDefault(userId);
         }
         Address address = addressRepository.save(Address.create(user, request.recipientName(),
                 request.recipientPhone(), request.zipCode(), request.address1(), request.address2(),
-                request.deliveryNote(), request.setDefault()));
+                request.deliveryNote(), request.wantsDefault()));
         return AddressResponse.from(address);
     }
 
