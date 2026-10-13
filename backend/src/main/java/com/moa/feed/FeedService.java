@@ -3,7 +3,6 @@ package com.moa.feed;
 import com.moa.claim.ActiveClaimView;
 import com.moa.claim.ClaimRepository;
 import com.moa.claim.ClaimStatus;
-import com.moa.claim.MyClaimView;
 import com.moa.comment.CommentRepository;
 import com.moa.comment.CommentView;
 import com.moa.global.ApiException;
@@ -69,9 +68,11 @@ public class FeedService {
             comments = comments.subList(0, COMMENT_PAGE_SIZE);
         }
 
-        List<MyClaimView> myClaims = viewerId == null
+        List<MyClaimResponse> myClaims = viewerId == null
                 ? List.of()
-                : claimRepository.findMyClaims(postId, viewerId, ClaimStatus.IN_PROGRESS);
+                : claimRepository.findMyClaims(postId, viewerId, ClaimStatus.IN_PROGRESS).stream()
+                        .map(MyClaimResponse::from)
+                        .toList();
         return new FeedResponse(now, post.getStatus(), products, comments, hasMore, myClaims);
     }
 

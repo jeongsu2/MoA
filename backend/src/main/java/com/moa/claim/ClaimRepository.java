@@ -17,9 +17,11 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     List<ActiveClaimView> findActiveViews(@Param("claimIds") Collection<Long> claimIds);
 
     @Query("select new com.moa.claim.MyClaimView(c.id, p.id, c.status, c.deadlineAt, sp.bankName,"
-            + " sp.accountNumber, sp.accountHolder, p.price, post.shippingFee, post.remoteShippingFee)"
+            + " sp.accountNumber, sp.accountHolder, p.price, post.shippingFee, post.remoteShippingFee,"
+            + " o.totalAmount, o.price, o.shippingFee, o.zipCode, o.address1)"
             + " from Claim c join c.product p join p.post post"
             + " join SellerProfile sp on sp.userId = post.seller.id"
+            + " left join PurchaseOrder o on o.claim = c"
             + " where post.id = :postId and c.buyer.id = :buyerId and c.status in :statuses order by c.id asc")
     List<MyClaimView> findMyClaims(@Param("postId") Long postId, @Param("buyerId") Long buyerId,
             @Param("statuses") Collection<ClaimStatus> statuses);
