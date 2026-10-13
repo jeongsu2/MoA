@@ -13,6 +13,7 @@ import com.moa.post.ProductRepository;
 import com.moa.post.SalePost;
 import com.moa.post.SalePostRepository;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -29,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class FeedService {
 
     public static final int COMMENT_PAGE_SIZE = 100;
+    // afterId보다 작은 id라도 이 시간 안에 만든 댓글은 다시 준다. 댓글 INSERT에서 커밋까지 걸리는 시간보다 넉넉하게
+    public static final Duration RECENT_OVERLAP = Duration.ofSeconds(5);
 
     private final Clock clock;
     private final SalePostRepository salePostRepository;
@@ -60,7 +63,7 @@ public class FeedService {
 
         // 하나 더 읽어서 다음 쪽이 있는지 안다
         List<CommentView> comments = commentRepository.findFeedComments(postId, afterId,
-                PageRequest.of(0, COMMENT_PAGE_SIZE + 1));
+                now.minus(RECENT_OVERLAP), PageRequest.of(0, COMMENT_PAGE_SIZE + 1));
         boolean hasMore = comments.size() > COMMENT_PAGE_SIZE;
         if (hasMore) {
             comments = comments.subList(0, COMMENT_PAGE_SIZE);
