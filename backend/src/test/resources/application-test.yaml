@@ -2,3 +2,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+moa:
+  image:
+    # 테스트가 레포 안 uploads 폴더를 건드리지 않게 임시 폴더에 저장
+    dir: ${java.io.tmpdir}/moa-test-uploads

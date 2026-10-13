@@ -1,10 +1,12 @@
 package com.moa;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.servlet.http.Cookie;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +17,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -31,6 +35,10 @@ public abstract class IntegrationTestSupport {
     protected static final String PASSWORD = "password123!";
     protected static final String CSRF_HEADER = "X-XSRF-TOKEN";
     protected static final String CSRF_COOKIE = "XSRF-TOKEN";
+    protected static final String IMAGES = "/api/images";
+
+    // 아무 픽셀 없는 PNG 시그니처 + 채움 바이트. 서버는 앞부분 바이트로만 형식을 본다
+    private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
 
     @Autowired
     protected MockMvc mockMvc;
@@ -63,7 +71,8 @@ public abstract class IntegrationTestSupport {
     }
 
     // GET /api/auth/csrf로 받은 토큰을 쿠키와 헤더에 같이 붙인다 (프론트와 같은 방식)
-    protected MockHttpServletRequestBuilder withCsrf(MockHttpServletRequestBuilder builder) throws Exception {
+    // multipart 요청도 같이 쓰도록 빌더 타입을 열어 둔다
+    protected <B extends AbstractMockHttpServletRequestBuilder<B>> B withCsrf(B builder) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/auth/csrf")).andExpect(status().isOk()).andReturn();
         Cookie csrfCookie = result.getResponse().getCookie(CSRF_COOKIE);
         return builder.cookie(csrfCookie).header(CSRF_HEADER, csrfCookie.getValue());
@@ -120,5 +129,24 @@ public abstract class IntegrationTestSupport {
                 .andExpect(status().isCreated())
                 .andReturn();
         return (MockHttpSession) result.getRequest().getSession(false);
+    }
+
+    protected byte[] pngBytes(int size) {
+        byte[] bytes = Arrays.copyOf(PNG_SIGNATURE, Math.max(size, PNG_SIGNATURE.length));
+        Arrays.fill(bytes, PNG_SIGNATURE.length, bytes.length, (byte) 7);
+        return bytes;
+    }
+
+    protected MockMultipartFile imageFile(String fileName, byte[] content) {
+        return new MockMultipartFile("file", fileName, "image/png", content);
+    }
+
+    // 판매자 세션으로 이미지 하나를 올리고 키를 돌려준다
+    protected String uploadImage(MockHttpSession seller) throws Exception {
+        String response = mockMvc.perform(withCsrf(multipart(IMAGES).file(imageFile("a.png", pngBytes(100))))
+                        .session(seller))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return jsonMapper.readTree(response).get("imageKey").asString();
     }
 }
