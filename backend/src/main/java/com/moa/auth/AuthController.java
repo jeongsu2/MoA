@@ -45,6 +45,14 @@ public class AuthController {
         return SignupResponse.from(user);
     }
 
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        User user = authService.authenticate(request);
+        sessionLoginHandler.login(user, httpRequest, httpResponse);
+        return LoginResponse.from(user);
+    }
+
     // 토큰을 읽는 순간 XSRF-TOKEN 쿠키도 같이 내려간다
     @GetMapping("/csrf")
     public CsrfResponse csrf(CsrfToken csrfToken) {

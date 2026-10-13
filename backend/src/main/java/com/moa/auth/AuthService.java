@@ -50,6 +50,20 @@ public class AuthService {
         return user;
     }
 
+    // 없는 아이디와 틀린 비밀번호는 같은 응답. 정지 여부는 비밀번호가 맞을 때만 알려준다
+    @Transactional(readOnly = true)
+    public User authenticate(LoginRequest request) {
+        User user = userRepository.findByLoginId(request.loginId())
+                .orElseThrow(() -> new ApiException(ErrorCode.LOGIN_FAILED));
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ApiException(ErrorCode.LOGIN_FAILED);
+        }
+        if (user.isSuspended()) {
+            throw new ApiException(ErrorCode.ACCOUNT_SUSPENDED);
+        }
+        return user;
+    }
+
     private User saveUser(String loginId, String password, Role role, String nickname,
             String realName, String phone) {
         User user = new User(loginId, passwordEncoder.encode(password), role, nickname,
