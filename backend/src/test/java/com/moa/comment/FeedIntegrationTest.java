@@ -111,6 +111,30 @@ class FeedIntegrationTest extends ClaimTestSupport {
     }
 
     @Test
+    @DisplayName("afterId보다 작은 id라도 최근 5초 안에 만든 댓글은 겹쳐 준다. 늦게 커밋된 댓글을 놓치지 않게")
+    void recentCommentsOverlap() throws Exception {
+        MockHttpSession seller = signupSeller("seller01", "판매자1");
+        MockHttpSession buyer = signupBuyer("buyer01", "구매자1");
+        Long postId = createOpenPost(seller, List.of(product("1", "니트")));
+        testClock.setTo(FIXED_NOW.minusMinutes(10));
+        Long oldId = comment(buyer, postId, "예전 댓글").get("commentId").asLong();
+        testClock.setTo(FIXED_NOW);
+        Long recentId = comment(buyer, postId, "최근 댓글").get("commentId").asLong();
+        Long lastId = comment(buyer, postId, "마지막 댓글").get("commentId").asLong();
+
+        // 프론트가 lastId까지 받았는데 recentId가 그 뒤에 커밋된 상황. 5초 안이라 다시 온다
+        testClock.setTo(FIXED_NOW.plusSeconds(5));
+        JsonNode overlapped = readFeed(postId, lastId);
+        List<Long> ids = new ArrayList<>();
+        overlapped.get("comments").forEach(comment -> ids.add(comment.get("commentId").asLong()));
+        assertThat(ids).containsExactly(recentId, lastId).doesNotContain(oldId);
+
+        // 5초가 지나면 afterId 이후만
+        testClock.setTo(FIXED_NOW.plusSeconds(6));
+        assertThat(readFeed(postId, lastId).get("comments").isEmpty()).isTrue();
+    }
+
+    @Test
     @DisplayName("F-02 댓글 150개: 첫 응답 100개와 hasMore=true, 이어서 50개와 false. 피드는 아무 행도 안 바꾼다")
     void pagingAndReadOnly() throws Exception {
         MockHttpSession seller = signupSeller("seller01", "판매자1");
