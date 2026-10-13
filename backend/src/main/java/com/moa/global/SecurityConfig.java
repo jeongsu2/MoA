@@ -42,6 +42,9 @@ public class SecurityConfig {
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/error").permitAll()
+                        // 구매자는 인스타 링크로 들어와 로그인 없이 사진을 본다
+                        .requestMatchers(HttpMethod.GET, "/images/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/images").hasRole("SELLER")
                         .requestMatchers(HttpMethod.PUT, "/api/me/seller-profile").hasRole("SELLER")
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
