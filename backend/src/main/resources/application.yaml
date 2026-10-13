@@ -7,6 +7,10 @@ spring:
     hibernate:
       # 지금은 로컬과 테스트뿐이라 ddl-auto로 테이블을 만든다. 운영 배포 전에 Flyway로 바꾼다 (D-36)
       ddl-auto: update
+  jackson:
+    deserialization:
+      # 가격 1.5를 1로 바꿔 받지 않고 400으로 거부한다 (03 문서 AC-6)
+      accept-float-as-int: false
   servlet:
     multipart:
       # 파일 1장 상한은 moa.image.max-file-size와 같게. 요청 전체는 multipart 경계 문자열만큼 여유를 둔다

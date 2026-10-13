@@ -18,7 +18,8 @@ public enum ErrorCode {
     IMAGE_TOO_LARGE(HttpStatus.BAD_REQUEST, "이미지 파일이 너무 큽니다"),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다"),
     IMAGE_NOT_UPLOADED(HttpStatus.BAD_REQUEST, "먼저 올리지 않은 이미지가 있습니다"),
-    IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "글 하나에 올릴 수 있는 이미지 수를 넘었습니다");
+    IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "글 하나에 올릴 수 있는 이미지 수를 넘었습니다"),
+    DUPLICATE_ITEM_NO(HttpStatus.BAD_REQUEST, "같은 글 안에서 상품 번호가 겹칩니다");
 
     private final HttpStatus status;
     private final String message;
