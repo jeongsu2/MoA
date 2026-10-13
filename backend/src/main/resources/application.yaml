@@ -15,6 +15,7 @@ spring:
     multipart:
       # 파일 1장 상한은 moa.image.max-file-size와 같게. 요청 전체는 multipart 경계 문자열만큼 여유를 둔다
       max-file-size: ${moa.image.max-file-size}
+      # max-file-size를 올리면 이 값도 1MB 이상 크게 같이 올린다
       max-request-size: 11MB
 
 server:
