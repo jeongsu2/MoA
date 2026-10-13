@@ -11,6 +11,7 @@
 6. **quota 첫 행:** `INSERT ... ON DUPLICATE KEY UPDATE`로 만든 뒤 잠근다 (조회 후 INSERT 금지).
 7. **진 요청의 응답:** 4번 락을 잡은 뒤 다시 읽으므로 앞 요청이 커밋한 결과를 본다. 같은 요청 반복은 200과 현재 상태.
    - 입금 동작(신고, 입금확인, 입금 안 됨)은 `READ COMMITTED`로 연다 (#30). 잠글 상품 id를 알려고 락 전에 claim을 읽는데, `REPEATABLE READ`면 그 첫 읽기에서 스냅샷이 잡혀 락 뒤의 일반 SELECT가 앞 요청의 커밋(주문, 상태, 배송지 변경)을 못 본다.
+   - 락 전에 읽는 상태 전이 트랜잭션은 모두 RC로 연다 (#31 만료 포함). `isolation`은 새 트랜잭션을 열 때만 걸리므로, 바깥 트랜잭션 안에서 부르면 조용히 REPEATABLE READ로 돈다. 그래서 이런 메서드는 바깥에서 트랜잭션 없이 부른다.
    - 버린 대안: 락 뒤 읽기를 모두 `FOR SHARE`로 바꾸기 (읽기마다 잊으면 깨짐), claim을 먼저 잠그기 (product → claim 순서와 반대라 데드락).
    - 장애 시나리오: 이 설정을 빼면 신고 연타의 진 요청이 WON을 보고 409를 낸다. `REPEATABLE READ`로 돌려 DepositConcurrencyTest가 실패하는 것을 확인함.
    - 면접 질문 예시: "SELECT ... FOR UPDATE로 락을 잡았는데 그 뒤 일반 SELECT가 옛 값을 보는 이유는?"
