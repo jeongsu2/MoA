@@ -28,7 +28,13 @@ public enum ErrorCode {
     // 닫힌 글을 다시 열거나, 열지 않은 글을 닫을 때
     POST_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 글 상태에서는 할 수 없습니다"),
     // 판매를 닫은 글에는 새 댓글을 받지 않는다 (03 문서 Q-2 A)
-    POST_CLOSED(HttpStatus.CONFLICT, "판매가 끝난 글에는 댓글을 쓸 수 없습니다");
+    POST_CLOSED(HttpStatus.CONFLICT, "판매가 끝난 글에는 댓글을 쓸 수 없습니다"),
+    // 남의 당첨과 없는 당첨은 같은 응답 (D-34)
+    CLAIM_NOT_FOUND(HttpStatus.NOT_FOUND, "당첨을 찾을 수 없습니다"),
+    // 만료 스케줄러가 아직 안 돌았어도 deadline_at이 지나면 이 응답 (05 문서 AC-5)
+    DEPOSIT_DEADLINE_PASSED(HttpStatus.CONFLICT, "입금 시간이 지났습니다"),
+    // 다른 동작이 먼저 상태를 바꿨을 때. 같은 요청 반복은 이 응답이 아니라 200과 현재 상태
+    CLAIM_STATUS_CONFLICT(HttpStatus.CONFLICT, "지금 당첨 상태에서는 할 수 없습니다");
 
     private final HttpStatus status;
     private final String message;

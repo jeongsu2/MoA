@@ -48,7 +48,7 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 지금은 SYSTEM 감사 댓글만 쓴다. 사용자 대댓글은 범위 밖
+    // 당첨 댓글에 다는 자동 댓글(DEPOSIT_REPORT, SYSTEM)만 쓴다. 사용자 대댓글은 범위 밖
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parent;
@@ -71,19 +71,32 @@ public class Comment {
     // 삭제 API는 아직 없다 (04 문서 4장)
     private LocalDateTime deletedAt;
 
+    public static final String DEPOSIT_REPORT_CONTENT = "입금완료";
+
     public static Comment normal(SalePost post, User user, String content, LocalDateTime now) {
-        return create(post, user, CommentType.NORMAL, null, content, now);
+        return create(post, user, CommentType.NORMAL, null, null, content, now);
     }
 
     public static Comment order(SalePost post, User user, Product product, String content, LocalDateTime now) {
-        return create(post, user, CommentType.ORDER, product, content, now);
+        return create(post, user, CommentType.ORDER, null, product, content, now);
     }
 
-    private static Comment create(SalePost post, User user, CommentType type, Product product, String content,
-            LocalDateTime now) {
+    // 당첨자가 [입금완료]를 누르면 당첨 댓글 밑에 자동으로 달린다 (ERD 5장)
+    public static Comment depositReport(SalePost post, User buyer, Comment winningComment, LocalDateTime now) {
+        return create(post, buyer, CommentType.DEPOSIT_REPORT, winningComment, null, DEPOSIT_REPORT_CONTENT, now);
+    }
+
+    // 판매자 버튼으로 자동 작성하는 댓글. 작성자는 그 글의 판매자 (D-08)
+    public static Comment system(SalePost post, User seller, Comment parent, String content, LocalDateTime now) {
+        return create(post, seller, CommentType.SYSTEM, parent, null, content, now);
+    }
+
+    private static Comment create(SalePost post, User user, CommentType type, Comment parent, Product product,
+            String content, LocalDateTime now) {
         Comment comment = new Comment();
         comment.post = post;
         comment.user = user;
+        comment.parent = parent;
         comment.type = type;
         comment.product = product;
         comment.content = content;
