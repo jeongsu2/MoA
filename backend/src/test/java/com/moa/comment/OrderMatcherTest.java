@@ -31,6 +31,18 @@ class OrderMatcherTest {
         assertThat(OrderMatcher.match("1빈티지 원피스", PRODUCTS)).contains(DRESS);
     }
 
+    @Test
+    @DisplayName("M-01 NBSP(U+00A0)도 공백으로 본다. 복사해 붙인 댓글에 자주 섞인다")
+    void matchWithNoBreakSpace() {
+        assertThat(OrderMatcher.match("1-2\u00A0보라색\u00A0에코백", PRODUCTS)).contains(BAG);
+    }
+
+    @Test
+    @DisplayName("M-01 전각 공백(U+3000)도 공백으로 본다. 한글 입력기에서 들어온다")
+    void matchWithIdeographicSpace() {
+        assertThat(OrderMatcher.match("1.\u3000빈티지\u3000원피스", PRODUCTS)).contains(DRESS);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"3 oxford shirt", "3 OXFORD SHIRT", "3.oXfOrDsHiRt"})
     @DisplayName("M-01 영문 대소문자는 무시")
