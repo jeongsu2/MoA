@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.servlet.http.Cookie;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.json.JsonMapper;
 
 // 통합 테스트 공통. 동시성 테스트가 있어서 @Transactional 롤백 대신 테스트마다 테이블을 비운다
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestClockConfiguration.class})
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -36,6 +37,8 @@ public abstract class IntegrationTestSupport {
     protected static final String CSRF_HEADER = "X-XSRF-TOKEN";
     protected static final String CSRF_COOKIE = "XSRF-TOKEN";
     protected static final String IMAGES = "/api/images";
+    // 테스트마다 시계를 이 시각으로 되돌린다
+    public static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 10, 13, 10, 0, 0);
 
     // 아무 픽셀 없는 PNG 시그니처 + 채움 바이트. 서버는 앞부분 바이트로만 형식을 본다
     private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
@@ -49,8 +52,19 @@ public abstract class IntegrationTestSupport {
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    protected MutableClock testClock;
+
+    @BeforeEach
+    protected void resetClock() {
+        testClock.setTo(FIXED_NOW);
+    }
+
     @BeforeEach
     protected void cleanTables() {
+        jdbcTemplate.update("delete from claim");
+        jdbcTemplate.update("delete from purchase_quota");
+        jdbcTemplate.update("delete from comment");
         jdbcTemplate.update("delete from product");
         jdbcTemplate.update("delete from post_image");
         jdbcTemplate.update("delete from sale_post");
@@ -65,6 +79,39 @@ public abstract class IntegrationTestSupport {
                 "select count(*) from users u where (select count(*) from address a"
                         + " where a.user_id = u.id and a.is_default = true) <> 1",
                 Integer.class);
+        return count == null ? 0 : count;
+    }
+
+    // 당첨 불변식 (04 테스트 계획 0장). 셋 다 0이어야 한다
+    // I-1. 상품마다 진행 중 claim(WON, REPORTED)은 0개 또는 1개
+    protected int countProductsWithManyActiveClaims() {
+        return queryCount("select count(*) from (select product_id from claim where status in ('WON', 'REPORTED')"
+                + " group by product_id having count(*) > 1) t");
+    }
+
+    // I-2. current_claim_id는 그 상품의 진행 중 claim이고 그때만 RESERVED. 진행 중 claim이 없으면 null
+    protected int countProductsWithBrokenCurrentClaim() {
+        return queryCount("select count(*) from product p left join claim c on c.id = p.current_claim_id"
+                + " where (p.current_claim_id is null and (p.status = 'RESERVED' or exists (select 1 from claim a"
+                + " where a.product_id = p.id and a.status in ('WON', 'REPORTED'))))"
+                + " or (p.current_claim_id is not null and (p.status <> 'RESERVED' or c.id is null"
+                + " or c.product_id <> p.id or c.status not in ('WON', 'REPORTED')))");
+    }
+
+    // I-3. active_count = 그 글에서 그 사람의 WON, REPORTED, CONFIRMED claim 수, 그리고 5 이하
+    protected int countBrokenQuotas() {
+        int wrongCount = queryCount("select count(*) from purchase_quota q where q.active_count > 5"
+                + " or q.active_count <> (select count(*) from claim c join product p on p.id = c.product_id"
+                + " where p.post_id = q.post_id and c.buyer_id = q.user_id"
+                + " and c.status in ('WON', 'REPORTED', 'CONFIRMED'))");
+        int missingRow = queryCount("select count(*) from claim c join product p on p.id = c.product_id"
+                + " where c.status in ('WON', 'REPORTED', 'CONFIRMED') and not exists (select 1 from purchase_quota q"
+                + " where q.post_id = p.post_id and q.user_id = c.buyer_id)");
+        return wrongCount + missingRow;
+    }
+
+    private int queryCount(String sql) {
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
         return count == null ? 0 : count;
     }
 

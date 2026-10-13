@@ -1,4 +1,8 @@
 spring:
+  datasource:
+    hikari:
+      # 동시성 테스트가 20개 요청을 한꺼번에 보낸다. 기본 10이면 풀 대기와 락 대기가 섞여 원인을 가리기 어렵다
+      maximum-pool-size: 30
   jpa:
     hibernate:
       ddl-auto: create-drop
