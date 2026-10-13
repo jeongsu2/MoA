@@ -14,7 +14,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// 지금은 가입 때 기본 배송지 1개만 저장한다. 목록, 추가, 기본 변경은 #27
+// 사용자당 기본(is_default=true)은 항상 정확히 1개. 바꾸는 요청은 AddressService가 users 행 락으로 줄 세운다 (D-34)
 @Entity
 @Table(name = "address", indexes = @Index(name = "idx_address_user_default", columnList = "user_id, is_default"))
 @Getter
@@ -53,6 +53,11 @@ public class Address {
 
     public static Address defaultOf(User user, String recipientName, String recipientPhone,
             String zipCode, String address1, String address2, String deliveryNote) {
+        return create(user, recipientName, recipientPhone, zipCode, address1, address2, deliveryNote, true);
+    }
+
+    public static Address create(User user, String recipientName, String recipientPhone, String zipCode,
+            String address1, String address2, String deliveryNote, boolean isDefault) {
         Address address = new Address();
         address.user = user;
         address.recipientName = recipientName;
@@ -61,7 +66,7 @@ public class Address {
         address.address1 = address1;
         address.address2 = address2;
         address.deliveryNote = deliveryNote;
-        address.isDefault = true;
+        address.isDefault = isDefault;
         return address;
     }
 }
