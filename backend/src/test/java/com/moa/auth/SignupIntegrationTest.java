@@ -134,6 +134,18 @@ class SignupIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("A-11 앞뒤에 공백을 붙여 같은 닉네임을 피해 가면 400")
+    void signupWithPaddedNickname() throws Exception {
+        signupBuyer("buyer01", "구매자1");
+
+        mockMvc.perform(jsonPost("/api/auth/signup/buyer", buyerBody("buyer02", " 구매자1")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.nickname").exists());
+
+        assertThat(countRows("users")).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("A-12 필수값 누락과 전화번호, 우편번호 형식 오류는 400과 틀린 필드 이름을 준다")
     void signupWithInvalidFields() throws Exception {
         Map<String, Object> body = buyerBody("buyer01", "구매자1");

@@ -11,7 +11,8 @@ import jakarta.validation.constraints.Size;
 public record BuyerSignupRequest(
         @NotBlank @Pattern(regexp = SignupPatterns.LOGIN_ID, message = "영문 소문자, 숫자 4~20자") String loginId,
         @NotNull @Pattern(regexp = SignupPatterns.PASSWORD, message = "영문, 숫자, 특수문자 8~64자") String password,
-        @NotBlank @Size(min = 2, max = 20) String nickname,
+        @NotBlank @Size(min = 2, max = 20)
+        @Pattern(regexp = SignupPatterns.NICKNAME, message = "앞뒤 공백 없이") String nickname,
         @NotBlank @Size(max = 50) String realName,
         @NotBlank @Pattern(regexp = SignupPatterns.PHONE, message = "숫자만 10~11자리, 01로 시작") String phone,
         @NotNull @Valid AddressRequest address,
