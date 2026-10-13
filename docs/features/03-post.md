@@ -43,7 +43,9 @@
 |---|---|---|---|
 | POST | `/api/images` | multipart `file` | 201, imageKey, url |
 | POST | `/api/posts` | title, content, imageKeys[], products[{itemNo, name, price}] | 201, postId, status |
-| PUT | `/api/posts/{postId}` | title, content, imageKeys[], products[{productId(있으면), itemNo, name, price}] | 200, 글 상세 |
+| PUT | `/api/posts/{postId}` | title, content, imageKeys[], products[{itemNo, name, price}] (생략 가능) | 200, 글 상세 |
+
+- PUT의 products: DRAFT일 때만 보낼 수 있고, 보내면 상품을 통째로 바꿈(productId가 바뀜). OPEN, CLOSED 글에 보내면 409 `PRODUCTS_LOCKED`라 제목, 본문, 사진만 고칠 땐 products를 빼고 보냄 (Q-1 A)
 | POST | `/api/posts/{postId}/open` | 없음 | 200, status, openedAt |
 | POST | `/api/posts/{postId}/close` | 없음 (Q-2에서 A를 고를 때만) | 200, status |
 | GET | `/api/posts/{postId}` | 없음 | 200, postId, title, content, status, openedAt, sellerNickname, images[{url, sortOrder}], products[{productId, itemNo, name, price, status}], shippingFee, remoteShippingFee |
