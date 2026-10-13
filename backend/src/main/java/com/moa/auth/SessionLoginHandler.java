@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.stereotype.Component;
 
 // 인증이 끝난 회원을 서버 세션에 로그인 상태로 저장한다 (D-16)
@@ -17,9 +18,12 @@ import org.springframework.stereotype.Component;
 public class SessionLoginHandler {
 
     private final SecurityContextRepository securityContextRepository;
+    private final CsrfTokenRepository csrfTokenRepository;
 
-    public SessionLoginHandler(SecurityContextRepository securityContextRepository) {
+    public SessionLoginHandler(SecurityContextRepository securityContextRepository,
+            CsrfTokenRepository csrfTokenRepository) {
         this.securityContextRepository = securityContextRepository;
+        this.csrfTokenRepository = csrfTokenRepository;
     }
 
     public void login(User user, HttpServletRequest request, HttpServletResponse response) {
@@ -34,5 +38,7 @@ public class SessionLoginHandler {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
+        // 로그인 전에 새어 나간 CSRF 토큰을 로그인 뒤에 못 쓰게 버린다. 다음 요청에서 새 토큰이 발급된다
+        csrfTokenRepository.saveToken(null, request, response);
     }
 }

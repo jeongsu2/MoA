@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.logout.HttpStatusReturnin
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -29,7 +30,7 @@ public class SecurityConfig {
         http
                 // 프론트는 XSRF-TOKEN 쿠키(또는 GET /api/auth/csrf 응답)의 값을 X-XSRF-TOKEN 헤더로 보낸다
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .securityContext(context -> context.securityContextRepository(securityContextRepository()))
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -50,6 +51,11 @@ public class SecurityConfig {
                                 jsonErrorWriter.write(response, ErrorCode.FORBIDDEN)))
                 .addFilterBefore(new ActiveUserFilter(userRepository, jsonErrorWriter), AuthorizationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
     }
 
     @Bean
