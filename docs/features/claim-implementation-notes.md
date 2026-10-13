@@ -8,6 +8,7 @@
 4. **claim 상태를 바꾸는 모든 트랜잭션은 먼저 product 행을 FOR UPDATE.** 당첨, 입금완료, 입금확인, 입금 안 됨, 만료가 같은 상품에서 한 줄로 선다. 그 뒤에 claim을 조건부 UPDATE (상태 조건 포함, 바뀐 행 수로 승패 판단). 당첨 판정의 실제 순서는 product → quota → 댓글 INSERT → claim이고, 시각은 락을 잡은 뒤에 읽는다.
 5. **락 순서:** product → purchase_quota. quota 행을 두 개 잡을 땐 `user_id` 작은 순서.
    - 입금완료(#30)는 product → claim UPDATE → users(구매자 FOR UPDATE) → 기본 배송지 읽기. 배송지 변경(#27)은 users만 잡고 product, claim을 안 건드려서 사이클이 없다. users를 product보다 먼저 잡는 코드는 만들지 않는다.
+   - 승계(#31) 후보가 고른 사이 5개가 차면 다음 후보의 quota를 순서 밖에서 잡을 수 있음. 데드락이면 만료는 다음 실행에서 재시도, [입금 안 됨]은 409 다시 시도 (받아들인 위험).
 6. **quota 첫 행:** `INSERT ... ON DUPLICATE KEY UPDATE`로 만든 뒤 잠근다 (조회 후 INSERT 금지).
 7. **진 요청의 응답:** 4번 락을 잡은 뒤 다시 읽으므로 앞 요청이 커밋한 결과를 본다. 같은 요청 반복은 200과 현재 상태.
    - 입금 동작(신고, 입금확인, 입금 안 됨)은 `READ COMMITTED`로 연다 (#30). 잠글 상품 id를 알려고 락 전에 claim을 읽는데, `REPEATABLE READ`면 그 첫 읽기에서 스냅샷이 잡혀 락 뒤의 일반 SELECT가 앞 요청의 커밋(주문, 상태, 배송지 변경)을 못 본다.
@@ -16,3 +17,6 @@
    - 장애 시나리오: 이 설정을 빼면 신고 연타의 진 요청이 WON을 보고 409를 낸다. `REPEATABLE READ`로 돌려 DepositConcurrencyTest가 실패하는 것을 확인함.
    - 면접 질문 예시: "SELECT ... FOR UPDATE로 락을 잡았는데 그 뒤 일반 SELECT가 옛 값을 보는 이유는?"
 8. **테스트:** `moa.scheduler.enabled=false`로 테스트에서 스케줄러를 끄고 테스트가 만료 처리를 직접 부른다. 동시성 테스트는 스레드 20개, 10번 반복. Hikari 풀은 테스트에서 30, `innodb_lock_wait_timeout` 기본값(50초).
+9. **알려진 한계 (#31):**
+   - 스케줄러는 한 번에 100개만 읽어서, 100개보다 많은 claim이 계속 실패하면 뒤 claim 만료가 밀림 (지금 규모에선 그대로).
+   - 댓글 삭제(R-14)가 생기면 차순위 후보 쿼리(`CommentRepository.findOrderCandidates`)에 `deleted_at` 조건 추가 필요.
