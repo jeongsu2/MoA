@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -52,4 +53,15 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     @Query("update Claim c set c.status = com.moa.claim.ClaimStatus.REJECTED, c.endedAt = :now"
             + " where c.id = :claimId and c.status = com.moa.claim.ClaimStatus.REPORTED")
     int reject(@Param("claimId") Long claimId, @Param("now") LocalDateTime now);
+
+    // 5분 만료. deadline_at <= now일 때만 성공한다. 신고와 같은 WON 조건이라 둘 중 먼저 커밋한 하나만 이긴다 (06 문서 AC-2, AC-5)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Claim c set c.status = com.moa.claim.ClaimStatus.EXPIRED, c.endedAt = :now"
+            + " where c.id = :claimId and c.status = com.moa.claim.ClaimStatus.WON and c.deadlineAt <= :now")
+    int expire(@Param("claimId") Long claimId, @Param("now") LocalDateTime now);
+
+    // 만료 스케줄러가 처리할 claim. claim (status, deadline_at) 인덱스로 읽는다 (06 문서 3장)
+    @Query("select c.id from Claim c where c.status = com.moa.claim.ClaimStatus.WON and c.deadlineAt <= :now"
+            + " order by c.deadlineAt asc, c.id asc")
+    List<Long> findDueClaimIds(@Param("now") LocalDateTime now, Pageable pageable);
 }
