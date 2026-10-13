@@ -3,6 +3,7 @@
 > 2026-10-12, 상태: **승인됨 (2026-10-12, 정수).** 구현(Phase 5)은 이 ERD 기준. 바꾸려면 변경 이유를 결정 로그에 남기고 v3로
 > 입력: [requirements.md](../requirements.md) D-01~D-26, [02 동시성](../research/02-concurrency-and-timer.md), [03 인증, 이미지, 실시간](../research/03-auth-image-realtime.md), [v1 초안](erd-draft-v1.md)
 > 흐름 확인: [MoA 흐름 프로토타입](https://claude.ai/artifact/ULbUH1UvtE8dufGcCHEkc4) (원본 `prototype/moa-prototype.html`)
+> 2026-10-13 추가: `users.nickname` 유니크 (D-35). 구조는 그대로.
 
 ## 0. v1에서 바뀐 것
 | 변경 | 이유 | 결정 |
