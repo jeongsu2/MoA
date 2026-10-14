@@ -37,8 +37,21 @@
 - 프로토타입 피드백 반영(D-25): 입금 금액에 배송비 포함, 제주 산간 6,000원.
 - ERD v2 작성: v1 + 프로토타입 피드백(닉네임, My 배송지, 배송비, 주문 생성 시점)을 반영하고 변경표를 맨 앞에 둠. 승인 요청.
 - 2026-10-12 ERD v2 승인. Phase 2 완료.
+- 2026-10-12 Phase 3 면접 질문 100개 작성(interview-questions.md): 결정 로그 D-xx와 리서치 문서에 질문마다 근거를 연결하고, 꼬리질문 순서로 10개 영역에 배치.
 
 ## 2026-10-12 Phase 4 하네스 설계 초안
 - 서브에이전트 7개 정의(.claude/agents), CLAUDE.md, git hook(commit-msg, pre-push) 초안을 harness/에 작성. 역할마다 도구 권한을 다르게 줌(reviewer는 쓰기 없음).
 - git hook은 임시 레포에서 통과, 차단 케이스를 직접 실행해 확인.
 - 결정(ADR-003): 하네스 레포에 올림, git hook으로 검사, pm/qa/backend-dev/reviewer 매번, 나머지는 필요할 때.
+
+## 2026-10-12 Phase 5-1 뼈대
+- 결정 D-28~D-31: Gradle, Java 21, Docker Compose MySQL, 뼈대는 정수가 IntelliJ로 직접 생성(학습 목적). Claude는 설정 가이드(docs/setup/phase5-1-skeleton.md)를 쓰고 생성 결과를 리뷰.
+- 정수 요청으로 Claude가 뼈대 생성(D-32). start.spring.io는 네트워크 차단(403)이라 Initializr 출력 형식을 직접 재현. Maven Central 429(요청 제한)는 재시도로 해결. 컨테이너에서 dockerd를 띄워 테스트(Testcontainers)와 bootRun(Docker Compose 자동 실행) 모두 확인.
+
+## 2026-10-13 Phase 5 기능 구현 (#26~#31)
+- 흐름: 기능마다 pm(기능 문서) → qa(테스트 계획) → backend-dev(구현, 커밋) → reviewer(diff 리뷰) → 지적 반영 → 푸시. 정수 요청 "오버엔지니어링 금지"를 모든 에이전트 지시에 넣음.
+- 속도: pm은 3~6번 문서를 한 번에, qa는 4~6번 계획을 한 번에 씀. #29부터는 git worktree로 리뷰와 다음 구현을 겹쳐 돌림. 브랜치는 #26 위에 #27, 그 위에 #28 식으로 쌓음.
+- reviewer가 잡은 것: 로그인 때 CSRF 토큰 미교체, 닉네임 앞뒤 공백, **피드 afterId 폴링이 늦게 커밋된 댓글을 영원히 놓치는 버그**, 락 대기만큼 5분이 줄어드는 문제, NBSP 공백, [입금 안 됨] 뒤 승계 누락(#31로 범위 정리), 데드락 시 500.
+- qa가 미리 잡은 것: 기본 배송지 한 문장 UPDATE의 함정, 시계 통일, 5분 경계, REPEATABLE READ 스냅샷, quota 두 행 데드락, quota 첫 행 중복 키. 기술 기본값으로 정리해 docs/features/claim-implementation-notes.md에 둠.
+- 검증 방식: 락이나 격리 수준을 일부러 빼고 돌려서 동시성 테스트가 실제로 실패하는지 확인 (배송지 11개, 당첨 500, 데드락, 엉뚱한 차순위). 테스트 139개.
+- 남은 것: 3~6번 열린 질문 9개는 추천안으로 구현, 정수 확인 전. 도서산간 목록은 제주, 울릉만.
