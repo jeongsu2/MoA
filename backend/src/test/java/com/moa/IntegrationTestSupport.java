@@ -48,6 +48,15 @@ public abstract class IntegrationTestSupport {
         jdbcTemplate.update("delete from users");
     }
 
+    // 불변식: 모든 사용자는 기본 배송지가 정확히 1개 (가입 때 1개가 생기므로 배송지 0개인 사용자는 없다)
+    protected int countUsersWithoutExactlyOneDefault() {
+        Integer count = jdbcTemplate.queryForObject(
+                "select count(*) from users u where (select count(*) from address a"
+                        + " where a.user_id = u.id and a.is_default = true) <> 1",
+                Integer.class);
+        return count == null ? 0 : count;
+    }
+
     protected int countRows(String table) {
         Integer count = jdbcTemplate.queryForObject("select count(*) from " + table, Integer.class);
         return count == null ? 0 : count;
