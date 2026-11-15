@@ -47,4 +47,17 @@ public class ClaimService {
         }
         return claim;
     }
+
+    // claim이 확정 없이 끝난 뒤(입금 안 됨, #31 만료) 부른다. 부르는 쪽이 product 행을 잡고 claim을 조건부 UPDATE로
+    // 끝낸 상태여야 한다. 끝난 구매자의 quota를 돌려주고 상품을 판매 중으로 되돌린다.
+    // #31: 차순위 승계를 여기에 넣는다. 그때 quota 두 행은 user_id 작은 순서로 잡는다 (notes 5번)
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void releaseEndedClaim(Long lockedProductId, Long postId, Long endedClaimId, Long buyerId) {
+        if (purchaseQuotaRepository.decrease(postId, buyerId) != 1) {
+            throw new IllegalStateException("당첨 " + endedClaimId + "의 구매 수를 돌려주지 못함");
+        }
+        if (productRepository.release(lockedProductId, endedClaimId) != 1) {
+            throw new IllegalStateException("상품 " + lockedProductId + "을 판매 중으로 되돌리지 못함");
+        }
+    }
 }

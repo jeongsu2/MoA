@@ -62,8 +62,11 @@ public abstract class IntegrationTestSupport {
 
     @BeforeEach
     protected void cleanTables() {
+        jdbcTemplate.update("delete from orders");
         jdbcTemplate.update("delete from claim");
         jdbcTemplate.update("delete from purchase_quota");
+        // 대댓글(parent_id)이 먼저 지워져야 부모 댓글을 지울 수 있다
+        jdbcTemplate.update("delete from comment where parent_id is not null");
         jdbcTemplate.update("delete from comment");
         jdbcTemplate.update("delete from product");
         jdbcTemplate.update("delete from post_image");
