@@ -132,10 +132,13 @@ public class DepositService {
         LocalDateTime now = now();
 
         if (claimRepository.reject(claimId, now) == 1) {
-            claimService.releaseEndedClaim(target.productId(), target.postId(), claimId, target.buyerId());
-            return new RejectResponse(claimId, ClaimStatus.REJECTED, null);
+            // 만료와 같은 승계 로직 (06 문서 AC-9)
+            RejectResponse.NextClaim nextClaim = claimService.releaseEndedClaim(target.productId(), target.postId(),
+                    claimId, target.buyerId(), now).map(RejectResponse.NextClaim::from).orElse(null);
+            return new RejectResponse(claimId, ClaimStatus.REJECTED, nextClaim);
         }
 
+        // 다시 누른 요청은 승계를 또 하지 않는다 (05 문서 AC-19). 그 사이 승계된 claim은 피드에서 본다
         if (findClaim(claimId).getStatus() == ClaimStatus.REJECTED) {
             return new RejectResponse(claimId, ClaimStatus.REJECTED, null);
         }

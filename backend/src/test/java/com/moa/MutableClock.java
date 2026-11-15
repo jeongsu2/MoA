@@ -12,6 +12,8 @@ public class MutableClock extends Clock {
 
     private final AtomicReference<Instant> instant;
     private final ZoneId zone;
+    // 동시성 테스트에서 스레드마다 다른 시각을 줄 때 쓴다 (06 테스트 계획 E-05). 없으면 공용 시각
+    private final ThreadLocal<Instant> threadInstant = new ThreadLocal<>();
 
     public MutableClock(LocalDateTime start, ZoneId zone) {
         this.zone = zone;
@@ -20,6 +22,15 @@ public class MutableClock extends Clock {
 
     public void setTo(LocalDateTime time) {
         instant.set(time.atZone(zone).toInstant());
+    }
+
+    // 이 스레드에서만 time을 돌려준다. 작업이 끝나면 clearCurrentThread로 지운다
+    public void setForCurrentThread(LocalDateTime time) {
+        threadInstant.set(time.atZone(zone).toInstant());
+    }
+
+    public void clearCurrentThread() {
+        threadInstant.remove();
     }
 
     public void advance(Duration duration) {
@@ -38,6 +49,7 @@ public class MutableClock extends Clock {
 
     @Override
     public Instant instant() {
-        return instant.get();
+        Instant own = threadInstant.get();
+        return own == null ? instant.get() : own;
     }
 }
