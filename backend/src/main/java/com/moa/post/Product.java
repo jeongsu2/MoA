@@ -52,6 +52,11 @@ public class Product {
     @Column(nullable = false, length = 20)
     private ProductStatus status;
 
+    // 진행 중 당첨(WON, REPORTED)의 claim id. 없으면 null.
+    // MySQL에는 부분 유니크 인덱스가 없어서 "상품마다 진행 중 claim 1개"를 이 컬럼의 조건부 UPDATE로 지킨다 (D-20).
+    // claim과 서로 FK를 걸면 순환 참조라서 값만 둔다
+    private Long currentClaimId;
+
     public Product(SalePost post, String itemNo, String name, int price) {
         this.post = post;
         this.itemNo = itemNo;

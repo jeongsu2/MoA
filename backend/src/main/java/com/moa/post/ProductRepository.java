@@ -1,7 +1,10 @@
 package com.moa.post;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,4 +18,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying(flushAutomatically = true)
     @Query("delete from Product p where p.post.id = :postId")
     int deleteByPostId(@Param("postId") Long postId);
+
+    @Query("select new com.moa.post.ProductKey(p.id, p.itemNo, p.name) from Product p where p.post.id = :postId")
+    List<ProductKey> findKeysByPostId(@Param("postId") Long postId);
+
+    // SELECT ... FOR UPDATE. 같은 상품의 당첨 판정을 한 줄로 세운다. 락을 잡은 순서가 곧 당첨 순서다 (D-22).
+    // 앞 요청이 커밋한 상태를 다시 읽으므로 진 요청은 RESERVED를 본다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Product p where p.id = :productId")
+    Optional<Product> findByIdForUpdate(@Param("productId") Long productId);
+
+    // 진행 중 당첨 연결. 락을 잡고 부르므로 늘 1이어야 하고, 0이면 상품당 진행 중 claim 2개를 막는 마지막 방어선이 걸린 것 (D-20)
+    @Modifying(flushAutomatically = true)
+    @Query("update Product p set p.status = com.moa.post.ProductStatus.RESERVED, p.currentClaimId = :claimId"
+            + " where p.id = :productId and p.status = com.moa.post.ProductStatus.ON_SALE"
+            + " and p.currentClaimId is null")
+    int reserve(@Param("productId") Long productId, @Param("claimId") Long claimId);
 }
