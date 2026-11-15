@@ -1,0 +1,42 @@
+package com.moa.post;
+
+import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface SalePostRepository extends JpaRepository<SalePost, Long> {
+
+    // 최신순 = id 역순. 상품 수는 글마다 따로 묻지 않고 한 쿼리로 같이 센다
+    @Query("select new com.moa.post.MyPostResponse(p.id, p.title, p.status, p.openedAt,"
+            + " (select count(pr) from Product pr where pr.post = p))"
+            + " from SalePost p where p.seller.id = :sellerId order by p.id desc")
+    List<MyPostResponse> findMyPosts(@Param("sellerId") Long sellerId);
+
+    // SELECT ... FOR UPDATE. 수정과 오픈이 동시에 와도 한 줄로 선다.
+    // 오픈이 먼저 커밋되면 수정은 OPEN을 보고 상품 변경을 거부한다. 내 글이 아니면 잠그지 않고 빈 결과
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from SalePost p where p.id = :postId and p.seller.id = :sellerId")
+    Optional<SalePost> findMyPostForUpdate(@Param("postId") Long postId, @Param("sellerId") Long sellerId);
+
+    // 상태 전이는 조건부 UPDATE 한 문장으로 한다. 바뀐 행이 1이면 성공, 0이면 이유를 따로 읽어 판단한다.
+    // 오픈이 두 번 동시에 와도 한쪽만 1을 받아서 opened_at이 한 번만 정해진다
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update SalePost p set p.status = com.moa.post.PostStatus.OPEN, p.openedAt = :now"
+            + " where p.id = :postId and p.seller.id = :sellerId and p.status = com.moa.post.PostStatus.DRAFT"
+            + " and exists (select 1 from Product pr where pr.post.id = :postId)")
+    int open(@Param("postId") Long postId, @Param("sellerId") Long sellerId, @Param("now") LocalDateTime now);
+
+    // 새 댓글 막기와 승계 멈춤은 이 상태를 보고 #29, #31에서 처리한다 (03 문서 Q-2 A)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update SalePost p set p.status = com.moa.post.PostStatus.CLOSED"
+            + " where p.id = :postId and p.seller.id = :sellerId and p.status = com.moa.post.PostStatus.OPEN")
+    int close(@Param("postId") Long postId, @Param("sellerId") Long sellerId);
+
+    Optional<SalePost> findByIdAndSellerId(Long id, Long sellerId);
+}
