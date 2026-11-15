@@ -22,6 +22,7 @@
 - 3~6번 기능 문서의 열린 질문 9개는 **추천안으로 구현함, 정수 확인 전**. 확정되면 requirements.md 8장에 D-37부터 남긴다.
 - 도서산간 우편번호 목록(`backend/src/main/resources/remote-area-zip-codes.csv`)은 제주, 울릉만 들어 있음. 택배사 공개 목록으로 채워야 함.
 - D-36(JPA ddl-auto로 시작, 배포 전 Flyway)은 Claude 기본값으로 정함.
+- ADR-006, 007의 "정수 확인 전" 세부 기준 (락 순서, READ COMMITTED, 스케줄러 세부값).
 
 ## 꼭 알아야 할 구현 기준
 - 당첨, 입금, 만료의 락 순서, 시계, 5분 경계, READ COMMITTED 이유: `docs/features/claim-implementation-notes.md`
@@ -32,6 +33,6 @@
 - 로컬 MySQL은 compose로 **3307** 포트 (정수 맥에 다른 MySQL이 3306을 씀). 접속 `localhost:3307`, `moa` / `moa`.
 
 ## 다음 할 일
-1. PR #26~#31 순서대로 머지
+1. PR #26~#31 순서대로 머지, 그다음 ADR PR(#35) 머지 (ADR 링크가 feat 브랜치 문서를 가리킴)
 2. 열린 질문 9개 확정, 결정 로그 기록
 3. 프론트 프레임워크 결정 (옵션 2~3개 비교 후 정수 결정), 화면 구현 (frontend-dev, prototype/ 흐름 기준)
