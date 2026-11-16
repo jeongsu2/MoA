@@ -1,6 +1,6 @@
 # 기능 06. 5분 만료와 차순위 승계
 
-> 2026-10-13, 작성: pm, 상태: **진행 (2026-10-13, 열린 질문은 추천안으로 구현, 정수 확인 전)**, 이슈 #31
+> 2026-10-13, 작성: pm, 상태: **확정 (2026-11-16, 열린 질문 D-40)**, 이슈 #31
 > 입력: [requirements.md](../requirements.md) F-06a, D-04, D-07, D-09, D-20, D-22 / [erd-v2.md](../erd/erd-v2.md) `claim`, `product`, `comment`, `purchase_quota`, 3장, 4장, 5장 / [02 동시성](../research/02-concurrency-and-timer.md) 3장
 
 ## 1. 유저 스토리

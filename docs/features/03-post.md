@@ -1,6 +1,6 @@
 # 기능 03. 판매 글과 상품 등록
 
-> 2026-10-13, 작성: pm, 상태: **진행 (2026-10-13, 열린 질문은 추천안으로 구현, 정수 확인 전)**, 이슈 #28
+> 2026-10-13, 작성: pm, 상태: **확정 (2026-11-16, 열린 질문 D-37)**, 이슈 #28
 > 입력: [requirements.md](../requirements.md) F-02, F-03, F-03a, D-12, D-17, D-21, D-25 / [erd-v2.md](../erd/erd-v2.md) `sale_post`, `post_image`, `product`, 5장(에디터) / [03 리서치](../research/03-auth-image-realtime.md) 2장
 
 ## 1. 유저 스토리
