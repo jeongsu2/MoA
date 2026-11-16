@@ -1,6 +1,6 @@
 # 기능 05. 입금완료 신고, 판매자 입금확인, 입금 안 됨
 
-> 2026-10-13, 작성: pm, 상태: **진행 (2026-10-13, 열린 질문은 추천안으로 구현, 정수 확인 전)**, 이슈 #30
+> 2026-10-13, 작성: pm, 상태: **확정 (2026-11-16, 열린 질문 D-39)**, 이슈 #30
 > 입력: [requirements.md](../requirements.md) F-06, F-06b, F-07, D-03, D-06, D-07, D-08, D-24, D-25, D-26, D-34 / [erd-v2.md](../erd/erd-v2.md) `claim`, `orders`, `seller_profile`, `purchase_quota`, 3장, 5장 / [02-address.md](02-address.md) AC-11
 
 ## 1. 유저 스토리

@@ -1,6 +1,6 @@
 # 기능 04. 댓글 주문과 선착순 당첨
 
-> 2026-10-13, 작성: pm, 상태: **진행 (2026-10-13, 열린 질문은 추천안으로 구현, 정수 확인 전)**, 이슈 #29
+> 2026-10-13, 작성: pm, 상태: **확정 (2026-11-16, 열린 질문 D-38)**, 이슈 #29
 > 입력: [requirements.md](../requirements.md) F-04, F-04a, F-05, F-05a, D-11, D-13, D-18, D-20, D-22 / [erd-v2.md](../erd/erd-v2.md) `comment`, `claim`, `product`, `purchase_quota`, 3장, 4장, 5장 / [02 동시성](../research/02-concurrency-and-timer.md) 1장, 2장 / [03b 실시간](../research/03b-realtime-detail.md)
 
 ## 1. 유저 스토리
