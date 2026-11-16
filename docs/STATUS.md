@@ -6,6 +6,7 @@
 - Phase 0~4 끝 (기획, 리서치, ERD v2 승인, 면접 질문, 하네스). 지금은 **Phase 5 단계별 구현**.
 - 백엔드 기능 6개 모두 develop에 머지됨, 테스트 139개 통과. 화면(프론트)은 아직 없음.
 - 기술 선택 이유는 ADR-004~009 (`docs/decisions/`).
+- 레포는 moamarket 조직 아래 3개 (D-41): Backend(이 레포, API와 문서, 하네스), [Frontend](https://github.com/moamarket/Frontend), [Infra](https://github.com/moamarket/Infra). 로컬은 `~/Projects/MoA`, `~/Projects/MoA-Frontend`, `~/Projects/MoA-Infra`.
 
 | 이슈 | 기능 | PR | 기능 문서 | 학습 포인트 |
 |---|---|---|---|---|
@@ -28,11 +29,10 @@
 - 되돌리기 어려운 기술 결정은 ADR을 쓰고 그 기능 PR에 같이 넣는다 (CLAUDE.md).
 
 ## 로컬 실행
-- 정수 맥: `~/Projects/MoA`. 앱 실행은 터미널에서 `cd backend && ./gradlew bootRun` (Docker Desktop 켜고).
+- 정수 맥: `~/Projects/MoA`. 앱 실행은 레포 루트에서 `./gradlew bootRun` (Docker Desktop 켜고).
 - 로컬 MySQL은 compose로 **3307** 포트 (정수 맥에 다른 MySQL이 3306을 씀). 접속 `localhost:3307`, `moa` / `moa`.
 
 ## 다음 할 일
-1. 레포 분리 (D-41): 정수가 GitHub 조직을 만들고 이 레포를 Transfer해서 Backend로 이름 변경 → Claude가 `backend/`를 루트로 올리고, `prototype/`을 Frontend로 옮기고, Infra README 작성
-2. 프론트 프레임워크 결정 (옵션 2~3개 비교 후 정수 결정), 목데이터로 화면 구현 (D-42, frontend-dev, prototype/ 흐름 기준)
-3. 나중에: API 연결, 부하 테스트(k6)로 폴링과 락 한계 측정
-4. 배포 전: 도서산간 우편번호 목록 채우기 (`backend/src/main/resources/remote-area-zip-codes.csv`, 지금은 제주, 울릉만), Flyway(D-36), S3(ADR-009)
+1. 프론트 프레임워크 결정 (옵션 2~3개 비교 후 정수 결정), 목데이터로 화면 구현 (D-42, frontend-dev, Frontend 레포 prototype/ 흐름 기준)
+2. 나중에: API 연결, 부하 테스트(k6)로 폴링과 락 한계 측정
+3. 배포 전: 도서산간 우편번호 목록 채우기 (`src/main/resources/remote-area-zip-codes.csv`, 지금은 제주, 울릉만), Flyway(D-36), S3(ADR-009)
